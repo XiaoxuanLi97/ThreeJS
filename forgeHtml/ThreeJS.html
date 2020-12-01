@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=no" />
+  <meta charset="UTF-8">
+  
+  <link rel="stylesheet" href="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/style.min.css" type="text/css">
+  <script src="https://developer.api.autodesk.com/modelderivative/v2/viewers/7.*/viewer3D.min.js"></script>
+  
+  
+  <title>Title</title>
+  
+  <style>
+    body{
+      margin: 0;
+    }
+    #forgeViewer{
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      backgroud-color:#F0F8FF;
+    }
+  </style>
+</head>
+<body>
+  <div id="forgeViewer"></div>
+<script>
+ let viewer;
+ let options ={
+   env:'Local',
+   model_src: "http://bim.ndwp.net:8876/forgescene/liuzaojiangzhazhan_20190905/3d.svf"
+   // api:'derivative2',
+   // getAccessToken:function (onTokenReady){
+   //   let token = 'YOUR_ACCESS_TOKEN';
+   //   let timeInSeconds = 3600;
+   //   onTokenReady(token, timeInSeconds)
+   // }
+ };
+ 
+ Autodesk.Viewing.Initializer(options,()=>{
+   let htmlDiv = document.getElementById('forgeViewer');
+   viewer = new Autodesk.Viewing.GuiViewer3D(htmlDiv,{});
+   let startedCode = viewer.start();
+   if (startedCode > 0){
+     console.error('Fail to create a Viewer:WebGL not supported');
+     return;
+   }
+   console.log('Initialization complete, loading a model next...');
+ });
+
+ 
+ viewer = new Autodesk.Viewing.Private.GuiViewer3D(document.getElementById('forgeViewer'),{});
+ 
+ Autodesk.Viewing.Initializer(options, () => {
+    viewer.initialize(); //创建DOM和canvas元素，设置WebGL
+    viewer.loadModel(options.model_src); //加载模型到查看器中
+ })
+
+
+ //
+ // let htmlDiv = document.getElementById('forgeViewer');
+ // viewer = new Autodesk.Viewing.GuiViewer3D(htmlDiv,{});
+ 
+ //viewer.finish();
+ // viewer = null;
+ // Autodesk.Viewing.shutdown();
+ // //
+ // let documentId = 'urn:dXJuOmFkc2sub2JqZWN0czpvcy5vYmplY3Q6bXktYnVja2V0L215LWF3ZXNvbWUtZm9yZ2UtZmlsZS5ydnQ';
+ // Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
+ //
+ // function onDocumentLoadSuccess(viewerDocument){
+ //   let defaultModel = viewerDocument.getRoot().getDefaultGeometry();
+ //   viewer.loadDocumentNode(viewerDocument, defaultModel)
+ // }
+ //
+ // function onDocumentLoadFailure(){
+ //   console.error('Failure fetching Forge manifest')
+ // }
+
+ 
+ 
+ 
+
+ 
+</script>
+</body>
+</html>
