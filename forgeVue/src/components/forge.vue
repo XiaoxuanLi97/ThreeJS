@@ -7,16 +7,28 @@ export default {
   name: "forge",
   data(){
     return{
-     viewer:[],
-     options:{
-        env:'Local',
-        model_src: "http://bim.ndwp.net:8876/forgescene/liuzaojiangzhazhan_20190905/3d.svf"
-      }
+      viewer:[],
+      optionList:[
+       {
+           env:'Local',
+           model_src: "http://bim.ndwp.net:8876/forgescene/liuzaojiangzhazhan_20190905/3d.svf"
+       },
+       {
+         env: "Local",
+         model_src:
+             "http://bim.ndwp.net:8876/forgescene/wuzaojiangzha_1/3d.svf"
+       },
+       {
+         env: "Local",
+         model_src:
+             "http://bim.ndwp.net:8876/forgescene/kongpuzhazhan/svf/3d.svf"
+       }
+       ]
     }
   },
   methods:{
-    init(){
-      Autodesk.Viewing.Initializer(this.options,()=>{
+    init(options){
+      Autodesk.Viewing.Initializer(options,()=>{
         let htmlDiv = document.getElementById('forgeViewer');
         this.viewer = new Autodesk.Viewing.GuiViewer3D(htmlDiv,{});
         let startedCode = this.viewer.start();
@@ -29,14 +41,14 @@ export default {
 
 
       this.viewer = new Autodesk.Viewing.Private.GuiViewer3D(document.getElementById('forgeViewer'),{});
-      Autodesk.Viewing.Initializer(this.options, () => {
+      Autodesk.Viewing.Initializer(options, () => {
         this.viewer.initialize(); //创建DOM和canvas元素，设置WebGL
-        this.viewer.loadModel(this.options.model_src); //加载模型到查看器中
+        this.viewer.loadModel(options.model_src); //加载模型到查看器中
       })
     }
   },
   mounted(){
-    this.init();
+    this.init(this.optionList[0]);
   }
 }
 </script>
