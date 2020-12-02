@@ -1,9 +1,21 @@
 <template>
   <div id="forgeViewer">
+      <div id="customUI">
+      ID of Items selected:
+        <label>
+        <input type="text" id="selectedId" />
+        </label>
+      </div>
+
+    <div id="button">
+      <button @click="load">load</button>
+      <button @click="unload">unload</button>
+    </div>
+
     <div id="select">
-      <label for="sceneSelect">选择场景 </label>
+      <label for="sceneSelect">Choose Scene </label>
       <select id="sceneSelect" @change="changeScene">
-      <option v-for="item in optionList" :value="item.id">场景{{item.id}}</option>
+      <option v-for="item in optionList" :value="item.id">{{item.id}}</option>
       </select>
     </div>
   </div>
@@ -14,6 +26,7 @@ export default {
   name: "forge",
   data(){
     return{
+      selectedId:null,
       viewer:null,
       optionList:[
        {
@@ -48,10 +61,14 @@ export default {
         }
         console.log('Initialization complete, loading a model next...');
       });
-      this.load(options)
+      this.loadScene(options)
     },
-    load(options) {
-      this.viewer = new Autodesk.Viewing.Private.GuiViewer3D(document.getElementById('forgeViewer'), {});
+    loadScene(options) {
+      let htmlDiv = document.getElementById('forgeViewer');
+      let config = {
+        extensions:['TemplateExtension']
+      }
+      this.viewer = new Autodesk.Viewing.Private.GuiViewer3D(htmlDiv, config);
       Autodesk.Viewing.Initializer(options, () => {
         this.viewer.initialize(); //创建DOM和canvas元素，设置WebGL
         this.viewer.loadModel(options.model_src); //加载模型到查看器中
@@ -62,13 +79,46 @@ export default {
       let e = document.getElementById('sceneSelect').value
       this.optionList.forEach(value => {
         if (value.id === e){
-          this.load(value)
+          this.loadScene(value)
         }
       })
-    }
+    },
+
+    load(){
+      this.viewer.loadExtension('TemplateExtension')
+    },
+
+    unload(){
+      this.viewer.unloadExtension('TemplateExtension')
+      this.viewer.clearSelection()
+    },
+
+    // getElementId(){
+    //   this.viewer.addEventListener(
+    //       Autodesk.Viewing.SELECTION_CHANGED_EVENT,
+    //       ()=>{
+    //         this.viewer.getSelection()
+    //
+    //       }
+    //   )
+    // }
+
   },
   mounted(){
     this.init(this.optionList[0])
+
+    setTimeout(()=>{
+      this.viewer.addEventListener(
+          Autodesk.Viewing.SELECTION_CHANGED_EVENT,
+          ()=>{
+            this.selectedId = String(this.viewer.getSelection())
+            console.log(this.selectedId)
+          }
+      )
+
+    },200)
+
+
   }
 }
 </script>
@@ -82,9 +132,12 @@ body{
   height: 100%;
   margin: 0;
   backgroud-color:#F0F8FF;
+  font-weight: bold;
+  font-family:Verdana,serif;
 }
 
 #select {
+  height: 24px;
   position: absolute;
   z-index: 2;
   right: 20px;
@@ -94,7 +147,20 @@ body{
   box-shadow: 1px 3px 10px 0 rgba(0, 0, 0, 0.3);
   outline: none;
   border-radius: 3px;
-  font-weight: bold;
-  font-family:Verdana,serif;
+
+}
+
+#button{
+  position: absolute;
+  z-index: 2;
+  right: 20px;
+  top: 150px;
+}
+
+#customUI{
+  position: absolute;
+  z-index: 2;
+  right: 20px;
+  top: 200px;
 }
 </style>

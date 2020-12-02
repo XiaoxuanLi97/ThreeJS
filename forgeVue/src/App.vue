@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <forgeViewer/>
+      <forgeViewer/>
   </div>
 </template>
 
