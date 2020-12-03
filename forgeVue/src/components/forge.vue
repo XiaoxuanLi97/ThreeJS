@@ -1,23 +1,29 @@
 <template>
   <div id="forgeViewer">
       <div id="customUI">
-      ID of Items selected:
-        <label>
+        <div id="select">
+          <label for="sceneSelect">Choose Scene </label>
+          <select id="sceneSelect" @change="changeScene">
+            <option v-for="item in optionList" :value="item.id">{{item.id}}</option>
+          </select>
+        </div>
+
+        <span>---Type ID or choose in model---</span><br>
+        <label for="selectedId">ID of component selected:</label>
         <input type="text" id="selectedId" :value="selectedId" size="5" @input="findElement"/>
-        </label>
+
+        <div id="button">
+        <button @click="StartEdit">StartEdit</button>
+        <button @click="EndEdit">EndEdit</button>
+        </div>
+
+        <div v-show="show">
+        <label for="myRange">Transparency: </label>
+        <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=0 />
+        </div>
       </div>
 
-    <div id="button">
-      <button @click="load">load</button>
-      <button @click="unload">unload</button>
-    </div>
 
-    <div id="select">
-      <label for="sceneSelect">Choose Scene </label>
-      <select id="sceneSelect" @change="changeScene">
-      <option v-for="item in optionList" :value="item.id">{{item.id}}</option>
-      </select>
-    </div>
   </div>
 </template>
 
@@ -26,6 +32,8 @@ export default {
   name: "forge",
   data(){
     return{
+      show:false,
+      currentOpacity:0,
       selectedId:null,
       viewer:null,
       optionList:[
@@ -63,6 +71,7 @@ export default {
       });
       this.loadScene(options)
     },
+
     loadScene(options) {
       let htmlDiv = document.getElementById('forgeViewer');
       let config = {
@@ -80,16 +89,23 @@ export default {
       this.optionList.forEach(value => {
         if (value.id === e){
           this.loadScene(value)
+          setTimeout(()=>{
+            this.getElementId()
+
+          },200)
+
         }
       })
     },
 
-    load(){
-      this.setTransparency()
-      // this.viewer.loadExtension('TemplateExtension')
+    StartEdit(){
+      this.show = true
+      this.getFragId()
+      this.viewer.loadExtension('TemplateExtension')
     },
 
-    unload(){
+    EndEdit(){
+      this.show = false
       this.viewer.unloadExtension('TemplateExtension')
       this.viewer.clearSelection()
     },
@@ -111,27 +127,33 @@ export default {
 
     },
 
-    setTransparency(){
+    getFragId() {
       let fragIds = [],
-          fragList = this.viewer.model.getFragmentList(),
           sel = this.viewer.getSelection(),
           dbId = sel[0],
           it = this.viewer.model.getData().instanceTree;
-      it.enumNodeFragments(dbId,(fragId)=>{
+      it.enumNodeFragments(dbId, (fragId) => {
         fragIds.push(fragId)
       });
+      return fragIds
+    },
 
-      fragIds.forEach((fragId)=>{
-            let material = fragList.getMaterial(fragId);
-             if(material){
-               // material.opacity -= 0.1; //调节一种材料的透明度，所有相同材料构件的透明度都会调整
-               material.transparent = true;
-               material.needsUpdate = true;
-             }
+    setTransparency() {
+      let fragList = this.viewer.model.getFragmentList(),
+          transparency = document.getElementById('myRange').value,
+          fragIds = this.getFragId();
+      fragIds.forEach((fragId) => {
+        let material = fragList.getMaterial(fragId);
+        if (material) {
+          // this.currentOpacity = material.opacity
+          material.opacity = transparency; //调节一种材料的透明度，所有相同材料构件的透明度都会调整
+          material.transparent = true;
+          material.needsUpdate = true;
+        }
+        console.log(material)
+
       })
-      console.log(fragIds)
-
-      this.viewer.impl.invalidate(true,true,true)
+      this.viewer.impl.invalidate(true, true, true)
     }
   },
   mounted(){
@@ -150,6 +172,7 @@ export default {
 <style scoped>
 body{
   margin: 0;
+
 }
 #forgeViewer{
   width: 100%;
@@ -161,11 +184,7 @@ body{
 }
 
 #select {
-  height: 24px;
-  position: absolute;
-  z-index: 2;
-  right: 20px;
-  top: 20px;
+  width: 165px;
   color: #f4f4f4;
   background-color: rgba(34, 34, 34, 0.94);
   box-shadow: 1px 3px 10px 0 rgba(0, 0, 0, 0.3);
@@ -174,17 +193,12 @@ body{
 
 }
 
-#button{
-  position: absolute;
-  z-index: 2;
-  right: 20px;
-  top: 150px;
-}
-
 #customUI{
   position: absolute;
   z-index: 2;
   right: 20px;
-  top: 200px;
+  top: 150px;
+  line-height: 24px;
 }
+
 </style>
