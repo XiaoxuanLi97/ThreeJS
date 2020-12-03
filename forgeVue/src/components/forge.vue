@@ -1,18 +1,18 @@
 <template>
   <div id="forgeViewer">
-      <div id="customUI">
-        <div id="select">
+      <div class="customUI">
+        <div class="select">
           <label for="sceneSelect">Choose Scene </label>
           <select id="sceneSelect" @change="changeScene">
             <option v-for="item in optionList" :value="item.id">{{item.id}}</option>
           </select>
         </div>
 
-        <span>---Type ID or choose in model---</span><br>
-        <label for="selectedId">ID of component selected:</label>
+        <span>---Type ID or Choose in model---</span><br>
+        <label for="selectedId">Selected ID:</label>
         <input type="text" id="selectedId" :value="selectedId" size="5" @input="findElement"/>
 
-        <div id="button">
+        <div class="button">
         <button @click="StartEdit">StartEdit</button>
         <button @click="EndEdit">EndEdit</button>
         </div>
@@ -22,8 +22,6 @@
         <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=0 />
         </div>
       </div>
-
-
   </div>
 </template>
 
@@ -99,9 +97,15 @@ export default {
     },
 
     StartEdit(){
-      this.show = true
-      this.getFragId()
-      this.viewer.loadExtension('TemplateExtension')
+      let n = document.getElementById('selectedId').value.length
+      if (n === 0 ){
+        alert('please choose a component')
+      }
+      else
+        this.show = true
+        this.getFragId()
+        this.viewer.loadExtension('TemplateExtension')
+
     },
 
     EndEdit(){
@@ -117,6 +121,7 @@ export default {
           ()=>{
             this.selectedId = String(this.viewer.getSelection())
             input = this.viewer.getSelection()
+            console.log(input)
           }
       )
     },
@@ -138,6 +143,11 @@ export default {
       return fragIds
     },
 
+    getTransparency(){
+      let fragIds = this.getFragId()
+
+    },
+
     setTransparency() {
       let fragList = this.viewer.model.getFragmentList(),
           transparency = document.getElementById('myRange').value,
@@ -151,7 +161,6 @@ export default {
           material.needsUpdate = true;
         }
         console.log(material)
-
       })
       this.viewer.impl.invalidate(true, true, true)
     }
@@ -161,7 +170,6 @@ export default {
 
     setTimeout(()=>{
       this.getElementId()
-
     },200)
 
 
@@ -183,7 +191,8 @@ body{
   font-family:Verdana,serif;
 }
 
-#select {
+.select {
+  position: center;
   width: 165px;
   color: #f4f4f4;
   background-color: rgba(34, 34, 34, 0.94);
@@ -193,7 +202,8 @@ body{
 
 }
 
-#customUI{
+.customUI{
+  text-align: center;
   position: absolute;
   z-index: 2;
   right: 20px;
