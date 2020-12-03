@@ -89,7 +89,6 @@ export default {
           this.loadScene(value)
           setTimeout(()=>{
             this.getElementId()
-
           },200)
 
         }
@@ -203,11 +202,10 @@ body{
 }
 
 .customUI{
-  text-align: center;
   position: absolute;
   z-index: 2;
-  right: 20px;
-  top: 150px;
+  left: 20px;
+  top: 20px;
   line-height: 24px;
 }
 

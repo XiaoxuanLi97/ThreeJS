@@ -6,8 +6,6 @@ class TemplateExtension extends Autodesk.Viewing.Extension {
 
   load(){
     console.log('loaded')
-    let elementId = this.viewer.getSelection()
-
     this.viewer.setTheme('light-theme');
     return true
   }
