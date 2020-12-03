@@ -3,7 +3,7 @@
       <div id="customUI">
       ID of Items selected:
         <label>
-        <input type="text" id="selectedId" />
+        <input type="text" id="selectedId" :value="selectedId" size="5" @input="findElement"/>
         </label>
       </div>
 
@@ -85,7 +85,8 @@ export default {
     },
 
     load(){
-      this.viewer.loadExtension('TemplateExtension')
+      this.setTransparency()
+      // this.viewer.loadExtension('TemplateExtension')
     },
 
     unload(){
@@ -93,28 +94,51 @@ export default {
       this.viewer.clearSelection()
     },
 
-    // getElementId(){
-    //   this.viewer.addEventListener(
-    //       Autodesk.Viewing.SELECTION_CHANGED_EVENT,
-    //       ()=>{
-    //         this.viewer.getSelection()
-    //
-    //       }
-    //   )
-    // }
+    getElementId(){
+      let input = document.getElementById('selectedId').value
+      this.viewer.addEventListener(
+          Autodesk.Viewing.SELECTION_CHANGED_EVENT,
+          ()=>{
+            this.selectedId = String(this.viewer.getSelection())
+            input = this.viewer.getSelection()
+          }
+      )
+    },
 
+    findElement(){
+      let input = document.getElementById('selectedId').value;
+      this.viewer.select(Number(input))
+
+    },
+
+    setTransparency(){
+      let fragIds = [],
+          fragList = this.viewer.model.getFragmentList(),
+          sel = this.viewer.getSelection(),
+          dbId = sel[0],
+          it = this.viewer.model.getData().instanceTree;
+      it.enumNodeFragments(dbId,(fragId)=>{
+        fragIds.push(fragId)
+      });
+
+      fragIds.forEach((fragId)=>{
+            let material = fragList.getMaterial(fragId);
+             if(material){
+               // material.opacity -= 0.1; //调节一种材料的透明度，所有相同材料构件的透明度都会调整
+               material.transparent = true;
+               material.needsUpdate = true;
+             }
+      })
+      console.log(fragIds)
+
+      this.viewer.impl.invalidate(true,true,true)
+    }
   },
   mounted(){
     this.init(this.optionList[0])
 
     setTimeout(()=>{
-      this.viewer.addEventListener(
-          Autodesk.Viewing.SELECTION_CHANGED_EVENT,
-          ()=>{
-            this.selectedId = String(this.viewer.getSelection())
-            console.log(this.selectedId)
-          }
-      )
+      this.getElementId()
 
     },200)
 
