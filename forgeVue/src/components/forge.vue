@@ -2,23 +2,23 @@
   <div id="forgeViewer">
       <div class="customUI">
         <div class="select">
-          <label for="sceneSelect">Choose Scene </label>
+          <label for="sceneSelect">选择场景 </label>
           <select id="sceneSelect" @change="changeScene">
             <option v-for="item in optionList" :value="item.id">{{item.id}}</option>
           </select>
         </div>
 
-        <span>---Type ID or Choose in model---</span><br>
-        <label for="selectedId">Selected ID:</label>
+        <span>---输入ID/在模型中选择---</span><br>
+        <label for="selectedId">选中的构件ID:</label>
         <input type="text" id="selectedId" :value="selectedId" size="5" @input="findElement"/>
 
         <div class="button">
-        <button @click="StartEdit">StartEdit</button>
-        <button @click="EndEdit">EndEdit</button>
+        <button @click="StartEdit">开始编辑</button>
+        <button @click="EndEdit">结束编辑</button>
         </div>
 
         <div v-show="show">
-        <label for="myRange">Transparency: </label>
+        <label for="myRange">透明度: </label>
         <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=0 />
         </div>
       </div>
@@ -26,11 +26,12 @@
 </template>
 
 <script>
+import transform from './extension/edit'
 export default {
   name: "forge",
   data(){
     return{
-      show:false,
+      show:false, //透明度滑动条是否显示
       currentOpacity:0,
       selectedId:null,
       viewer:null,
@@ -90,7 +91,6 @@ export default {
           setTimeout(()=>{
             this.getElementId()
           },200)
-
         }
       })
     },
@@ -98,9 +98,10 @@ export default {
     StartEdit(){
       let n = document.getElementById('selectedId').value.length
       if (n === 0 ){
-        alert('please choose a component')
+        alert('请选择一个有效的构件')
       }
       else
+        this.getMatrix()
         this.show = true
         this.getFragId()
         this.viewer.loadExtension('TemplateExtension')
@@ -142,11 +143,6 @@ export default {
       return fragIds
     },
 
-    getTransparency(){
-      let fragIds = this.getFragId()
-
-    },
-
     setTransparency() {
       let fragList = this.viewer.model.getFragmentList(),
           transparency = document.getElementById('myRange').value,
@@ -162,7 +158,42 @@ export default {
         console.log(material)
       })
       this.viewer.impl.invalidate(true, true, true)
+    },
+
+
+    getMatrix(){
+      let //fragList = this.viewer.model.getFragmentList(),
+          // bounds = new THREE.Box3(),
+          // box = new THREE.Box3(),
+          fragIdList = this.getFragId();
+
+      // let fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
+
+      fragIdList.forEach((fragId)=> {
+        const center = new THREE.Vector3(-10,0,0);
+        const model = this.viewer.model;
+        const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
+        fragProxy.getAnimTransform();
+        fragProxy.position = new THREE.Vector3(
+            fragProxy.position.x + center.x,
+            fragProxy.position.y + center.y,
+            fragProxy.position.z + center.z,
+        );
+        fragProxy.updateAnimTransform();
+        console.log(fragProxy.position)
+      })
+
+      this.viewer.impl.sceneUpdated(true);
+      // fragList.getWorldBounds(fragId,box)
+      // bounds.union(box);
+
+      // let fm = new THREE.Matrix4();
+      // fragList.getWorldMatrix(fragId,fm);
+      // console.log(fm)
+      // console.log(fragProxy)
     }
+
+
   },
   mounted(){
     this.init(this.optionList[0])
@@ -192,7 +223,7 @@ body{
 
 .select {
   position: center;
-  width: 165px;
+  width: 100px;
   color: #f4f4f4;
   background-color: rgba(34, 34, 34, 0.94);
   box-shadow: 1px 3px 10px 0 rgba(0, 0, 0, 0.3);

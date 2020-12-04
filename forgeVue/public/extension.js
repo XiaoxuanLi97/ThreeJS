@@ -15,6 +15,8 @@ class TemplateExtension extends Autodesk.Viewing.Extension {
     this.viewer.setTheme('dark-theme');
     return true
   }
+
+
 }
 
 Autodesk.Viewing.theExtensionManager.registerExtension('TemplateExtension',TemplateExtension)
