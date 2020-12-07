@@ -17,9 +17,45 @@
         <button @click="EndEdit">结束编辑</button>
         </div>
 
-        <div v-show="show">
-        <label for="myRange">透明度: </label>
-        <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=0 />
+        <div v-show="show" class="editTable">
+          <table>
+            <thead>
+            <tr>
+              <th/>
+              <th>平移(米)</th>
+              <th>旋转(度)</th>
+              <th>缩放(倍)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+              <td>x</td>
+              <td><label><input id="xMove" size="5"></label></td>
+              <td><label><input id="xRotate" size="5"></label></td>
+              <td><label><input id="xMagnify" size="5"></label></td>
+            </tr>
+            <tr>
+              <td>y</td>
+              <td><label><input id="yMove" size="5"></label></td>
+              <td><label><input id="yRotate" size="5"></label></td>
+              <td><label><input id="yMagnify" size="5"></label></td>
+            </tr>
+            <tr>
+              <td>z</td>
+              <td><label><input id="zMove" size="5"></label></td>
+              <td><label><input id="zRotate" size="5"></label></td>
+              <td><label><input id="zMagnify" size="5"></label></td>
+            </tr>
+
+            <tr>
+              <td colspan="2">透明度</td>
+              <td colspan="2">
+                <label for="myRange"></label>
+                <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=0 />
+              </td>
+            </tr>
+            </tbody>
+          </table>
         </div>
       </div>
   </div>
@@ -99,9 +135,10 @@ export default {
       let n = document.getElementById('selectedId').value.length
       if (n === 0 ){
         alert('请选择一个有效的构件')
+        this.show = false
       }
       else
-        this.getMatrix()
+        this.move()
         this.show = true
         this.getFragId()
         this.viewer.loadExtension('TemplateExtension')
@@ -161,13 +198,8 @@ export default {
     },
 
 
-    getMatrix(){
-      let //fragList = this.viewer.model.getFragmentList(),
-          // bounds = new THREE.Box3(),
-          // box = new THREE.Box3(),
-          fragIdList = this.getFragId();
-
-      // let fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
+    move(){
+      let fragIdList = this.getFragId();
 
       fragIdList.forEach((fragId)=> {
         const center = new THREE.Vector3(-10,0,0);
@@ -184,13 +216,6 @@ export default {
       })
 
       this.viewer.impl.sceneUpdated(true);
-      // fragList.getWorldBounds(fragId,box)
-      // bounds.union(box);
-
-      // let fm = new THREE.Matrix4();
-      // fragList.getWorldMatrix(fragId,fm);
-      // console.log(fm)
-      // console.log(fragProxy)
     }
 
 
@@ -238,6 +263,24 @@ body{
   left: 20px;
   top: 20px;
   line-height: 24px;
+}
+
+table{
+  border: 1px solid black;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+th,td{
+  padding: 3px 5px;
+  border: 1px solid #e9e9e9;
+  text-align: center;
+}
+
+th{
+  background-color: cornflowerblue;
+  color: black;
+  font-weight:600;
 }
 
 </style>
