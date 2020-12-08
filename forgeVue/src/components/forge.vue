@@ -1,21 +1,21 @@
 <template>
   <div id="forgeViewer">
-      <div class="customUI">
-        <div class="select">
-          <label for="sceneSelect">选择场景 </label>
-          <select id="sceneSelect" @change="changeScene">
-            <option v-for="item in optionList" :value="item.id">{{item.id}}</option>
-          </select>
-        </div>
+    <div class="customUI">
+      <div class="select">
+        <label for="sceneSelect">选择场景 </label>
+        <select id="sceneSelect" @change="changeScene">
+          <option v-for="item in optionList" :value="item.id">{{item.id}}</option>
+        </select>
+      </div>
 
         <span>---输入ID/在模型中选择---</span><br>
         <label for="selectedId">选中的构件ID:</label>
         <input type="text" id="selectedId" :value="selectedId" size="5" @input="findElement"/>
 
-        <div class="button">
+      <div class="button">
         <button @click="StartEdit">开始编辑</button>
         <button @click="EndEdit">结束编辑</button>
-        </div>
+      </div>
 
         <div v-show="show" class="editTable">
           <table>
@@ -30,21 +30,28 @@
             <tbody>
             <tr>
               <td>x</td>
-              <td><label><input id="xMove" size="5"></label></td>
-              <td><label><input id="xRotate" size="5"></label></td>
+              <td><label><input id="xMove" size="5" value=0 @change="move"></label></td>
+              <td><label><input id="xRotate" size="5" value=0 @change="rotate"></label></td>
               <td><label><input id="xMagnify" size="5"></label></td>
             </tr>
             <tr>
               <td>y</td>
-              <td><label><input id="yMove" size="5"></label></td>
-              <td><label><input id="yRotate" size="5"></label></td>
+              <td><label><input id="yMove" size="5" value=0 @change="move"></label></td>
+              <td><label><input id="yRotate" size="5" value=0 @change="rotate"></label></td>
               <td><label><input id="yMagnify" size="5"></label></td>
             </tr>
             <tr>
               <td>z</td>
-              <td><label><input id="zMove" size="5"></label></td>
-              <td><label><input id="zRotate" size="5"></label></td>
+              <td><label><input id="zMove" size="5" value=0 @change="move"></label></td>
+              <td><label><input id="zRotate" size="5" value=0 @change="rotate"></label></td>
               <td><label><input id="zMagnify" size="5"></label></td>
+            </tr>
+
+            <tr>
+              <td>复位</td>
+              <td><button id="moveRestore" @click="moveRestore">平移</button></td>
+              <td><button id="rotateRestore" @click="move">旋转</button></td>
+              <td><button id="magnifyRestore" @click="move">缩放</button></td>
             </tr>
 
             <tr>
@@ -93,6 +100,8 @@ export default {
     }
   },
   methods:{
+
+    //初始化查看器
     init(options){
       Autodesk.Viewing.Initializer(options,()=>{
         let htmlDiv = document.getElementById('forgeViewer');
@@ -107,6 +116,7 @@ export default {
       this.loadScene(options)
     },
 
+    //加载场景
     loadScene(options) {
       let htmlDiv = document.getElementById('forgeViewer');
       let config = {
@@ -119,6 +129,7 @@ export default {
       })
     },
 
+    //切换场景
     changeScene(){
       let e = document.getElementById('sceneSelect').value
       this.optionList.forEach(value => {
@@ -138,7 +149,6 @@ export default {
         this.show = false
       }
       else
-        this.move()
         this.show = true
         this.getFragId()
         this.viewer.loadExtension('TemplateExtension')
@@ -151,6 +161,7 @@ export default {
       this.viewer.clearSelection()
     },
 
+    //显示选中构件的ID
     getElementId(){
       let input = document.getElementById('selectedId').value
       this.viewer.addEventListener(
@@ -163,12 +174,14 @@ export default {
       )
     },
 
+    //根据ID找到构件
     findElement(){
       let input = document.getElementById('selectedId').value;
       this.viewer.select(Number(input))
 
     },
 
+    //找到选择构件的碎片ID
     getFragId() {
       let fragIds = [],
           sel = this.viewer.getSelection(),
@@ -180,6 +193,7 @@ export default {
       return fragIds
     },
 
+    //设置透明度
     setTransparency() {
       let fragList = this.viewer.model.getFragmentList(),
           transparency = document.getElementById('myRange').value,
@@ -197,26 +211,78 @@ export default {
       this.viewer.impl.invalidate(true, true, true)
     },
 
-
-    move(){
-      let fragIdList = this.getFragId();
+    //根据输入的xyz移动构件
+    move(x,y,z){
+      const fragIdList = this.getFragId();
+      x = Number(document.getElementById('xMove').value);
+      y = Number(document.getElementById('yMove').value);
+      z = Number(document.getElementById('zMove').value);
 
       fragIdList.forEach((fragId)=> {
-        const center = new THREE.Vector3(-10,0,0);
+        const center = new THREE.Vector3(x,y,z);
         const model = this.viewer.model;
         const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
         fragProxy.getAnimTransform();
         fragProxy.position = new THREE.Vector3(
-            fragProxy.position.x + center.x,
-            fragProxy.position.y + center.y,
-            fragProxy.position.z + center.z,
+            center.x,
+            center.y,
+            center.z,
         );
         fragProxy.updateAnimTransform();
-        console.log(fragProxy.position)
+        console.log('position：'+fragProxy.position)
       })
 
       this.viewer.impl.sceneUpdated(true);
+    },
+
+    //复原移动
+    moveRestore(){
+      document.getElementById('xMove').value = 0;
+      document.getElementById('yMove').value = 0;
+      document.getElementById('zMove').value = 0;
+      this.move()
+    },
+
+    rotate(x,y,z){
+     function radius(d){
+        return d*(Math.PI/180)
+     }
+
+      x = document.getElementById('xRotate').value
+      y = document.getElementById('yRotate').value
+      z = document.getElementById('zRotate').value
+
+      x = radius(x)
+      y = radius(y)
+      z = radius(z)
+
+      const fragList = this.getFragId();
+      const quaternion = new THREE.Quaternion();
+      quaternion.setFromAxisAngle( new THREE.Vector3(1,0,0), x)
+      quaternion.setFromAxisAngle( new THREE.Vector3(0,1,0), y)
+      quaternion.setFromAxisAngle( new THREE.Vector3(0,0,1), z)
+
+      fragList.forEach((fragId, index)=>{
+        const fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
+        fragProxy.getAnimTransform();
+        const position = new THREE.Vector3(
+             fragProxy.position.x,
+             fragProxy.position.y,
+             fragProxy.position.z
+        );
+        position.applyQuaternion(quaternion);
+        fragProxy.position = position;
+        fragProxy.quaternion.multiplyQuaternions(quaternion,fragProxy.quaternion);
+
+        if (index === 0 ){
+          const euler = new THREE.Euler();
+          euler.setFromQuaternion (fragProxy.quaternion , 0);
+        }
+        fragProxy.updateAnimTransform();
+      })
+      this.viewer.impl.sceneUpdated(true);
     }
+
 
 
   },
@@ -266,13 +332,13 @@ body{
 }
 
 table{
+  background: lightgrey;
   border: 1px solid black;
   border-collapse: collapse;
   border-spacing: 0;
 }
 
 th,td{
-  padding: 3px 5px;
   border: 1px solid #e9e9e9;
   text-align: center;
 }
