@@ -31,19 +31,19 @@
             <tr>
               <td>x</td>
               <td><label><input id="xMove" size="5" value=0 @change="move"></label></td>
-              <td><label><input id="xRotate" size="5" value=0 @change="rotate"></label></td>
+              <td><label><input id="xRotate" size="5" value=0 @change="rotateX"></label></td>
               <td><label><input id="xMagnify" size="5"></label></td>
             </tr>
             <tr>
               <td>y</td>
               <td><label><input id="yMove" size="5" value=0 @change="move"></label></td>
-              <td><label><input id="yRotate" size="5" value=0 @change="rotate"></label></td>
+              <td><label><input id="yRotate" size="5" value=0 @change=""></label></td>
               <td><label><input id="yMagnify" size="5"></label></td>
             </tr>
             <tr>
               <td>z</td>
               <td><label><input id="zMove" size="5" value=0 @change="move"></label></td>
-              <td><label><input id="zRotate" size="5" value=0 @change="rotate"></label></td>
+              <td><label><input id="zRotate" size="5" value=0 @change=""></label></td>
               <td><label><input id="zMagnify" size="5"></label></td>
             </tr>
 
@@ -60,6 +60,24 @@
                 <label for="myRange"></label>
                 <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=0 />
               </td>
+            </tr>
+
+            <tr>
+              <td colspan="4">自定义旋转</td>
+            </tr>
+
+            <tr>
+              <td>旋转原点</td>
+              <td><label for="cusRotateX0">x </label><input size="5" value=0 id="cusRotateX0" @change=""></td>
+              <td><label for="cusRotateY0">y </label><input size="5" value=0 id="cusRotateY0" @change=""></td>
+              <td><label for="cusRotateZ0">z </label><input size="5" value=0 id="cusRotateZ0" @cgange=""></td>
+            </tr>
+
+            <tr>
+              <td>旋转方向</td>
+              <td><label for="cusRotateX">x </label><input size="5" value=0 id="cusRotateX" @change=""></td>
+              <td><label for="cusRotateY">y </label><input size="5" value=0 id="cusRotateY" @change=""></td>
+              <td><label for="cusRotateZ">z </label><input size="5" value=0 id="cusRotateZ" @cgange=""></td>
             </tr>
             </tbody>
           </table>
@@ -161,6 +179,7 @@ export default {
       this.viewer.clearSelection()
     },
 
+
     //显示选中构件的ID
     getElementId(){
       let input = document.getElementById('selectedId').value
@@ -170,6 +189,8 @@ export default {
             this.selectedId = String(this.viewer.getSelection())
             input = this.viewer.getSelection()
             console.log(input)
+            console.log(" >LJason< 日志：点击位置",this.viewer.clientToWorld(Event.offsetX,Event.offsetY,false).intersectPoint);
+
           }
       )
     },
@@ -243,25 +264,19 @@ export default {
       this.move()
     },
 
-    rotate(x,y,z){
-     function radius(d){
-        return d*(Math.PI/180)
-     }
-
-      x = document.getElementById('xRotate').value
-      y = document.getElementById('yRotate').value
-      z = document.getElementById('zRotate').value
-
-      x = radius(x)
-      y = radius(y)
-      z = radius(z)
-
+    radius(d) {
+      return d * (Math.PI / 180)
+    },
+    rotateX() {
+      let x = Number(document.getElementById('xRotate').value);
+      x = this.radius(x);
       const fragList = this.getFragId();
       const quaternion = new THREE.Quaternion();
-      quaternion.setFromAxisAngle( new THREE.Vector3(1,0,0), x)
-      quaternion.setFromAxisAngle( new THREE.Vector3(0,1,0), y)
-      quaternion.setFromAxisAngle( new THREE.Vector3(0,0,1), z)
+      quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), x)
+      this.rotateSingle(fragList,quaternion)
+    },
 
+    rotateSingle(fragList, quaternion){
       fragList.forEach((fragId, index)=>{
         const fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
         fragProxy.getAnimTransform();
@@ -282,8 +297,6 @@ export default {
       })
       this.viewer.impl.sceneUpdated(true);
     }
-
-
 
   },
   mounted(){
