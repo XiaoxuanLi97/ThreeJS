@@ -17,7 +17,7 @@
         <button @click="EndEdit">结束编辑</button>
       </div>
 
-        <div v-show="show" class="editTable">
+        <div v-show="showUI" class="editTable">
           <table>
             <thead>
             <tr>
@@ -31,27 +31,20 @@
             <tr>
               <td>x</td>
               <td><label><input id="xMove" size="5" value=0 @change="move"></label></td>
-              <td><label><input id="xRotate" size="5" value=0 @change="rotateX"></label></td>
+              <td><label><input id="xRotate" size="5" value=0 @change="rotate(1)"></label></td>
               <td><label><input id="xMagnify" size="5"></label></td>
             </tr>
             <tr>
               <td>y</td>
               <td><label><input id="yMove" size="5" value=0 @change="move"></label></td>
-              <td><label><input id="yRotate" size="5" value=0 @change=""></label></td>
+              <td><label><input id="yRotate" size="5" value=0 @change="rotate(2)"></label></td>
               <td><label><input id="yMagnify" size="5"></label></td>
             </tr>
             <tr>
               <td>z</td>
               <td><label><input id="zMove" size="5" value=0 @change="move"></label></td>
-              <td><label><input id="zRotate" size="5" value=0 @change=""></label></td>
+              <td><label><input id="zRotate" size="5" value=0 @change="rotate(3)"></label></td>
               <td><label><input id="zMagnify" size="5"></label></td>
-            </tr>
-
-            <tr>
-              <td>复位</td>
-              <td><button id="moveRestore" @click="moveRestore">平移</button></td>
-              <td><button id="rotateRestore" @click="move">旋转</button></td>
-              <td><button id="magnifyRestore" @click="move">缩放</button></td>
             </tr>
 
             <tr>
@@ -63,21 +56,25 @@
             </tr>
 
             <tr>
-              <td colspan="4">自定义旋转</td>
+              <td colspan="4"><button @click="expandCusRotate">自定义旋转</button></td>
             </tr>
-
-            <tr>
+            <tr v-show="showCusRotate">
               <td>旋转原点</td>
               <td><label for="cusRotateX0">x </label><input size="5" value=0 id="cusRotateX0" @change=""></td>
               <td><label for="cusRotateY0">y </label><input size="5" value=0 id="cusRotateY0" @change=""></td>
               <td><label for="cusRotateZ0">z </label><input size="5" value=0 id="cusRotateZ0" @cgange=""></td>
             </tr>
 
-            <tr>
+            <tr v-show="showCusRotate">
               <td>旋转方向</td>
-              <td><label for="cusRotateX">x </label><input size="5" value=0 id="cusRotateX" @change=""></td>
-              <td><label for="cusRotateY">y </label><input size="5" value=0 id="cusRotateY" @change=""></td>
-              <td><label for="cusRotateZ">z </label><input size="5" value=0 id="cusRotateZ" @cgange=""></td>
+              <td><label for="cusRotateX">x </label><input size="5" value=0 id="cusRotateX"></td>
+              <td><label for="cusRotateY">y </label><input size="5" value=0 id="cusRotateY"></td>
+              <td><label for="cusRotateZ">z </label><input size="5" value=0 id="cusRotateZ"></td>
+            </tr>
+
+            <tr v-show="showCusRotate">
+              <td>旋转角度</td>
+              <td colspan="3"><label for="cusRotate"></label><input size="5" value=0 id="cusRotate" @change="rotate(4)"></td>
             </tr>
             </tbody>
           </table>
@@ -92,10 +89,15 @@ export default {
   name: "forge",
   data(){
     return{
-      show:false, //透明度滑动条是否显示
-      currentOpacity:0,
-      selectedId:null,
-      viewer:null,
+      degree:{ //记录上一个输入的旋转角度
+        x:0,
+        y:0,
+        z:0
+      },
+      showCusRotate:false, //自定义旋转UI是否显示
+      showUI:false, //编辑UI是否显示
+      selectedId:null, //当前选中的构件ID
+      viewer:null, //初始化viewer
       optionList:[
        {
          id:'1',
@@ -164,19 +166,20 @@ export default {
       let n = document.getElementById('selectedId').value.length
       if (n === 0 ){
         alert('请选择一个有效的构件')
-        this.show = false
+        this.showUI = false
       }
       else
-        this.show = true
+        this.showUI = true
         this.getFragId()
         this.viewer.loadExtension('TemplateExtension')
 
     },
 
     EndEdit(){
-      this.show = false
+      this.showUI = false
       this.viewer.unloadExtension('TemplateExtension')
       this.viewer.clearSelection()
+      this.restore()
     },
 
 
@@ -189,7 +192,7 @@ export default {
             this.selectedId = String(this.viewer.getSelection())
             input = this.viewer.getSelection()
             console.log(input)
-            console.log(" >LJason< 日志：点击位置",this.viewer.clientToWorld(Event.offsetX,Event.offsetY,false).intersectPoint);
+            // console.log(" >LJason< 日志：点击位置",this.viewer.clientToWorld(Event.offsetX,Event.offsetY,false).intersectPoint);
 
           }
       )
@@ -250,53 +253,95 @@ export default {
             center.z,
         );
         fragProxy.updateAnimTransform();
-        console.log('position：'+fragProxy.position)
       })
 
       this.viewer.impl.sceneUpdated(true);
     },
 
-    //复原移动
-    moveRestore(){
-      document.getElementById('xMove').value = 0;
-      document.getElementById('yMove').value = 0;
-      document.getElementById('zMove').value = 0;
-      this.move()
-    },
+    //选装构件
+    rotate(n) {
+      function radius(d) {
+        return d * (Math.PI / 180)
+      }
 
-    radius(d) {
-      return d * (Math.PI / 180)
-    },
-    rotateX() {
-      let x = Number(document.getElementById('xRotate').value);
-      x = this.radius(x);
+      //获取输入的旋转角度
+      let x = Number(document.getElementById('xRotate').value),
+          y = Number(document.getElementById('yRotate').value),
+          z = Number(document.getElementById('zRotate').value),
+          xCus0 = Number(document.getElementById('cusRotateX0')),
+          yCus0 = Number(document.getElementById('cusRotateX0')),
+          zCus0 = Number(document.getElementById('cusRotateX0')),
+          xCus = Number(document.getElementById('cusRotateX')),
+          yCus = Number(document.getElementById('cusRotateY')),
+          zCus = Number(document.getElementById('cusRotateZ'));
+
+      this.move(xCus0,yCus0,zCus0)
+
+      //模型旋转的角度为输入的旋转角度和上一次旋转角度的差值
+      let X = radius(x - this.degree.x),
+          Y = radius(y - this.degree.y),
+          Z = radius(z - this.degree.z);
+
+      //更新新的上一次旋转角度
+      this.degree.x = x
+      this.degree.y = y
+      this.degree.z = z
+
       const fragList = this.getFragId();
       const quaternion = new THREE.Quaternion();
-      quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), x)
-      this.rotateSingle(fragList,quaternion)
-    },
 
-    rotateSingle(fragList, quaternion){
-      fragList.forEach((fragId, index)=>{
+      //判断旋转轴
+      if (n === 1){
+        quaternion.setFromAxisAngle(new THREE.Vector3(1, 0, 0), X)
+      }
+      else if (n === 2){
+        quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Y)
+      }
+      else if (n === 3){
+        quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Z)
+      }
+      else if (n === 4){
+        quaternion.setFromAxisAngle(new THREE.Vector3(xCus,yCus,zCus),Math.PI/2)
+      }
+
+
+      fragList.forEach((fragId)=>{
         const fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
         fragProxy.getAnimTransform();
         const position = new THREE.Vector3(
-             fragProxy.position.x,
-             fragProxy.position.y,
-             fragProxy.position.z
+            fragProxy.position.x,
+            fragProxy.position.y,
+            fragProxy.position.z
         );
         position.applyQuaternion(quaternion);
         fragProxy.position = position;
         fragProxy.quaternion.multiplyQuaternions(quaternion,fragProxy.quaternion);
 
-        if (index === 0 ){
-          const euler = new THREE.Euler();
-          euler.setFromQuaternion (fragProxy.quaternion , 0);
-        }
+        // if (index === 0 ){
+        //   const euler = new THREE.Euler();
+        //   euler.setFromQuaternion (fragProxy.quaternion , 0);
+        // }
         fragProxy.updateAnimTransform();
       })
+
+      this.move(-xCus0,-yCus0,-zCus0)
       this.viewer.impl.sceneUpdated(true);
-    }
+    },
+
+    restore(){
+      this.degree.x = this.degree.y = this.degree.z = 0
+      document.getElementById('xMove').value = 0
+      document.getElementById('yMove').value = 0
+      document.getElementById('zMove').value = 0
+      document.getElementById('xRotate').value = 0
+      document.getElementById('yRotate').value = 0
+      document.getElementById('zRotate').value = 0
+    },
+
+    //展开自定义旋转
+    expandCusRotate(){
+      this.showCusRotate = !this.showCusRotate
+    },
 
   },
   mounted(){
