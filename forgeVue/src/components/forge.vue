@@ -262,6 +262,7 @@ export default {
 
     //旋转构件
     rotate(n) {
+      //角度转弧度
       function radius(d) {
         return d * (Math.PI / 180)
       }
@@ -274,10 +275,13 @@ export default {
           // xCus0 = Number(document.getElementById('cusRotateX0')),
           // yCus0 = Number(document.getElementById('cusRotateX0')),
           // zCus0 = Number(document.getElementById('cusRotateX0')),
+
+          //自定义旋转轴方向
            xCus = Number(document.getElementById('cusRotateX').value),
            yCus = Number(document.getElementById('cusRotateY').value),
            zCus = Number(document.getElementById('cusRotateZ').value);
-      // this.move(xCus0,yCus0,zCus0)
+
+      //将自定义旋转轴归一化
       let M = Math.sqrt(xCus^2 + yCus^2 + zCus^2)
       xCus = xCus/M;
       yCus = yCus/M;
@@ -309,7 +313,7 @@ export default {
         quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Z)
       }
       else if (n === 4){
-         quaternion.setFromAxisAngle(new THREE.Vector3(xCus,yCus,zCus),C)
+        quaternion.setFromAxisAngle(new THREE.Vector3(xCus,yCus,zCus),C)
       }
 
 
