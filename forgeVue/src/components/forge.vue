@@ -12,11 +12,6 @@
         <label for="selectedId">选中的构件ID:</label>
         <input type="text" id="selectedId" :value="selectedId" size="5" @input="findElement"/>
 
-      <div class="button">
-        <button @click="StartEdit">开始编辑</button>
-        <button @click="EndEdit">结束编辑</button>
-      </div>
-
         <div v-show="showUI" class="editTable">
           <table>
             <thead>
@@ -32,19 +27,19 @@
               <td>x</td>
               <td><label><input id="xMove" size="5" value=0 @change="move"></label></td>
               <td><label><input id="xRotate" size="5" value=0 @change="rotate(1)"></label></td>
-              <td><label><input id="xMagnify" size="5"></label></td>
+              <td><label><input id="xMagnify" size="5" value=1 @change="magnify"></label></td>
             </tr>
             <tr>
               <td>y</td>
               <td><label><input id="yMove" size="5" value=0 @change="move"></label></td>
               <td><label><input id="yRotate" size="5" value=0 @change="rotate(2)"></label></td>
-              <td><label><input id="yMagnify" size="5"></label></td>
+              <td><label><input id="yMagnify" size="5" value=1 @change="magnify"></label></td>
             </tr>
             <tr>
               <td>z</td>
               <td><label><input id="zMove" size="5" value=0 @change="move"></label></td>
               <td><label><input id="zRotate" size="5" value=0 @change="rotate(3)"></label></td>
-              <td><label><input id="zMagnify" size="5"></label></td>
+              <td><label><input id="zMagnify" size="5" value=1 @change="magnify"></label></td>
             </tr>
 
             <tr>
@@ -162,14 +157,19 @@ export default {
       })
     },
 
-    StartEdit(){
-      let n = document.getElementById('selectedId').value.length
-      if (n === 0 ){
-        alert('请选择一个有效的构件')
-        this.showUI = false
+    //打开编辑界面
+    openUI(){
+      if (this.viewer.getSelection().length === 0){
+        this.restore();
+        this.EndEdit();
       }
       else
-        this.showUI = true
+        this.StartEdit();
+    },
+
+    StartEdit(){
+      let n = document.getElementById('selectedId').value.length
+      this.showUI = n !== 0;
         this.getFragId()
         this.viewer.loadExtension('TemplateExtension')
 
@@ -193,7 +193,6 @@ export default {
             input = this.viewer.getSelection()
             console.log(input)
             // console.log(" >LJason< 日志：点击位置",this.viewer.clientToWorld(Event.offsetX,Event.offsetY,false).intersectPoint);
-
           }
       )
     },
@@ -202,7 +201,7 @@ export default {
     findElement(){
       let input = document.getElementById('selectedId').value;
       this.viewer.select(Number(input))
-
+      this.openUI()
     },
 
     //找到选择构件的碎片ID
@@ -258,7 +257,7 @@ export default {
       this.viewer.impl.sceneUpdated(true);
     },
 
-    //选装构件
+    //旋转构件
     rotate(n) {
       function radius(d) {
         return d * (Math.PI / 180)
@@ -267,15 +266,15 @@ export default {
       //获取输入的旋转角度
       let x = Number(document.getElementById('xRotate').value),
           y = Number(document.getElementById('yRotate').value),
-          z = Number(document.getElementById('zRotate').value),
-          xCus0 = Number(document.getElementById('cusRotateX0')),
-          yCus0 = Number(document.getElementById('cusRotateX0')),
-          zCus0 = Number(document.getElementById('cusRotateX0')),
-          xCus = Number(document.getElementById('cusRotateX')),
-          yCus = Number(document.getElementById('cusRotateY')),
-          zCus = Number(document.getElementById('cusRotateZ'));
+          z = Number(document.getElementById('zRotate').value);
+          // xCus0 = Number(document.getElementById('cusRotateX0')),
+          // yCus0 = Number(document.getElementById('cusRotateX0')),
+          // zCus0 = Number(document.getElementById('cusRotateX0')),
+          // xCus = Number(document.getElementById('cusRotateX')),
+          // yCus = Number(document.getElementById('cusRotateY')),
+          // zCus = Number(document.getElementById('cusRotateZ'));
 
-      this.move(xCus0,yCus0,zCus0)
+      // this.move(xCus0,yCus0,zCus0)
 
       //模型旋转的角度为输入的旋转角度和上一次旋转角度的差值
       let X = radius(x - this.degree.x),
@@ -300,9 +299,9 @@ export default {
       else if (n === 3){
         quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Z)
       }
-      else if (n === 4){
-        quaternion.setFromAxisAngle(new THREE.Vector3(xCus,yCus,zCus),Math.PI/2)
-      }
+      // else if (n === 4){
+      //   quaternion.setFromAxisAngle(new THREE.Vector3(xCus,yCus,zCus),Math.PI/2)
+      // }
 
 
       fragList.forEach((fragId)=>{
@@ -316,6 +315,7 @@ export default {
         position.applyQuaternion(quaternion);
         fragProxy.position = position;
         fragProxy.quaternion.multiplyQuaternions(quaternion,fragProxy.quaternion);
+        console.log(fragProxy)
 
         // if (index === 0 ){
         //   const euler = new THREE.Euler();
@@ -324,10 +324,32 @@ export default {
         fragProxy.updateAnimTransform();
       })
 
-      this.move(-xCus0,-yCus0,-zCus0)
+      // this.move(-xCus0,-yCus0,-zCus0)
       this.viewer.impl.sceneUpdated(true);
     },
 
+    //放大构件
+    magnify(){
+      const fragIdList = this.getFragId();
+      let x = Number(document.getElementById('xMagnify').value),
+          y = Number(document.getElementById('yMagnify').value),
+          z = Number(document.getElementById('zMagnify').value);
+
+      fragIdList.forEach((fragId)=> {
+        const model = this.viewer.model;
+        const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
+        fragProxy.getAnimTransform();
+        fragProxy.scale.x = x;
+        fragProxy.scale.y = y;
+        fragProxy.scale.z = z;
+        fragProxy.updateAnimTransform();
+      })
+
+      this.viewer.impl.sceneUpdated(true);
+
+    },
+
+    //复原参数
     restore(){
       this.degree.x = this.degree.y = this.degree.z = 0
       document.getElementById('xMove').value = 0
@@ -336,9 +358,12 @@ export default {
       document.getElementById('xRotate').value = 0
       document.getElementById('yRotate').value = 0
       document.getElementById('zRotate').value = 0
+      document.getElementById('xMagnify').value = 0
+      document.getElementById('yMagnify').value = 0
+      document.getElementById('zMagnify').value = 0
     },
 
-    //展开自定义旋转
+    //展开自定义旋转界面
     expandCusRotate(){
       this.showCusRotate = !this.showCusRotate
     },
@@ -346,6 +371,10 @@ export default {
   },
   mounted(){
     this.init(this.optionList[0])
+
+    document.addEventListener('click',()=>{
+      this.openUI()
+    })
 
     setTimeout(()=>{
       this.getElementId()
