@@ -9,7 +9,7 @@
       </div>
 
         <span>---输入ID/在模型中选择---</span><br>
-        <label for="selectedId">选中的构件ID:</label>
+        <label for="selectedId">构件ID:</label>
         <input type="text" id="selectedId" :value="selectedId" size="5" @input="findElement"/>
 
         <div v-show="showUI" class="editTable">
@@ -46,7 +46,7 @@
               <td colspan="2">透明度</td>
               <td colspan="2">
                 <label for="myRange"></label>
-                <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=0 />
+                <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=1 />
               </td>
             </tr>
 
@@ -87,7 +87,8 @@ export default {
       degree:{ //记录上一个输入的旋转角度
         x:0,
         y:0,
-        z:0
+        z:0,
+        c:0
       },
       showCusRotate:false, //自定义旋转UI是否显示
       showUI:false, //编辑UI是否显示
@@ -191,6 +192,7 @@ export default {
           ()=>{
             this.selectedId = String(this.viewer.getSelection())
             input = this.viewer.getSelection()
+            this.restore()
             console.log(input)
             // console.log(" >LJason< 日志：点击位置",this.viewer.clientToWorld(Event.offsetX,Event.offsetY,false).intersectPoint);
           }
@@ -251,6 +253,7 @@ export default {
             center.y,
             center.z,
         );
+        console.log(fragProxy)
         fragProxy.updateAnimTransform();
       })
 
@@ -266,25 +269,31 @@ export default {
       //获取输入的旋转角度
       let x = Number(document.getElementById('xRotate').value),
           y = Number(document.getElementById('yRotate').value),
-          z = Number(document.getElementById('zRotate').value);
+          z = Number(document.getElementById('zRotate').value),
+          c = Number(document.getElementById('cusRotate').value),
           // xCus0 = Number(document.getElementById('cusRotateX0')),
           // yCus0 = Number(document.getElementById('cusRotateX0')),
           // zCus0 = Number(document.getElementById('cusRotateX0')),
-          // xCus = Number(document.getElementById('cusRotateX')),
-          // yCus = Number(document.getElementById('cusRotateY')),
-          // zCus = Number(document.getElementById('cusRotateZ'));
-
+           xCus = Number(document.getElementById('cusRotateX').value),
+           yCus = Number(document.getElementById('cusRotateY').value),
+           zCus = Number(document.getElementById('cusRotateZ').value);
       // this.move(xCus0,yCus0,zCus0)
+      let M = Math.sqrt(xCus^2 + yCus^2 + zCus^2)
+      xCus = xCus/M;
+      yCus = yCus/M;
+      zCus = zCus/M;
 
       //模型旋转的角度为输入的旋转角度和上一次旋转角度的差值
       let X = radius(x - this.degree.x),
           Y = radius(y - this.degree.y),
-          Z = radius(z - this.degree.z);
+          Z = radius(z - this.degree.z),
+          C = radius(c - this.degree.c);
 
       //更新新的上一次旋转角度
       this.degree.x = x
       this.degree.y = y
       this.degree.z = z
+      this.degree.c = c
 
       const fragList = this.getFragId();
       const quaternion = new THREE.Quaternion();
@@ -299,9 +308,9 @@ export default {
       else if (n === 3){
         quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Z)
       }
-      // else if (n === 4){
-      //   quaternion.setFromAxisAngle(new THREE.Vector3(xCus,yCus,zCus),Math.PI/2)
-      // }
+      else if (n === 4){
+         quaternion.setFromAxisAngle(new THREE.Vector3(xCus,yCus,zCus),C)
+      }
 
 
       fragList.forEach((fragId)=>{
@@ -315,8 +324,6 @@ export default {
         position.applyQuaternion(quaternion);
         fragProxy.position = position;
         fragProxy.quaternion.multiplyQuaternions(quaternion,fragProxy.quaternion);
-        console.log(fragProxy)
-
         // if (index === 0 ){
         //   const euler = new THREE.Euler();
         //   euler.setFromQuaternion (fragProxy.quaternion , 0);
@@ -358,9 +365,12 @@ export default {
       document.getElementById('xRotate').value = 0
       document.getElementById('yRotate').value = 0
       document.getElementById('zRotate').value = 0
-      document.getElementById('xMagnify').value = 0
-      document.getElementById('yMagnify').value = 0
-      document.getElementById('zMagnify').value = 0
+      document.getElementById('xMagnify').value = 1
+      document.getElementById('yMagnify').value = 1
+      document.getElementById('zMagnify').value = 1
+      document.getElementById('cusRotateX').value = 0
+      document.getElementById('cusRotateY').value = 0
+      document.getElementById('cusRotateZ').value = 0
     },
 
     //展开自定义旋转界面
