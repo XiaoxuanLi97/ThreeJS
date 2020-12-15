@@ -25,19 +25,19 @@
             <tbody>
             <tr>
               <td>x</td>
-              <td><label><input id="xMove" size="5" value=0 @change="move"></label></td>
+              <td><label><input id="xMove" size="5" value=0 @change="move(1)"></label></td>
               <td><label><input id="xRotate" size="5" value=0 @change="rotate(1)"></label></td>
               <td><label><input id="xMagnify" size="5" value=1 @change="magnify"></label></td>
             </tr>
             <tr>
               <td>y</td>
-              <td><label><input id="yMove" size="5" value=0 @change="move"></label></td>
+              <td><label><input id="yMove" size="5" value=0 @change="move(1)"></label></td>
               <td><label><input id="yRotate" size="5" value=0 @change="rotate(2)"></label></td>
               <td><label><input id="yMagnify" size="5" value=1 @change="magnify"></label></td>
             </tr>
             <tr>
               <td>z</td>
-              <td><label><input id="zMove" size="5" value=0 @change="move"></label></td>
+              <td><label><input id="zMove" size="5" value=0 @change="move(1)"></label></td>
               <td><label><input id="zRotate" size="5" value=0 @change="rotate(3)"></label></td>
               <td><label><input id="zMagnify" size="5" value=1 @change="magnify"></label></td>
             </tr>
@@ -56,8 +56,8 @@
             <tr v-show="showCusRotate">
               <td>旋转原点</td>
               <td><label for="cusRotateX0">x </label><input size="5" value=0 id="cusRotateX0" @change=""></td>
-              <td><label for="cusRotateY0">y </label><input size="5" value=0 id="cusRotateY0" @change=""></td>
-              <td><label for="cusRotateZ0">z </label><input size="5" value=0 id="cusRotateZ0" @cgange=""></td>
+              <td><label for="cusRotateY0">y </label><input size="5" value=-7.12 id="cusRotateY0" @change=""></td>
+              <td><label for="cusRotateZ0">z </label><input size="5" value=-7.65 id="cusRotateZ0" @change=""></td>
             </tr>
 
             <tr v-show="showCusRotate">
@@ -69,7 +69,7 @@
 
             <tr v-show="showCusRotate">
               <td>旋转角度</td>
-              <td colspan="3"><label for="cusRotate"></label><input size="5" value=0 id="cusRotate" @change="rotate(4)"></td>
+              <td colspan="3"><label for="cusRotate"></label><input size="5" value=0 id="cusRotate" @change="cusRotate"></td>
             </tr>
             </tbody>
           </table>
@@ -84,14 +84,19 @@ export default {
   name: "forge",
   data(){
     return{
-      degree:{ //记录上一个输入的旋转角度
+      preRotate:{ //记录上一次的旋转角度
         x:0,
         y:0,
         z:0,
         c:0
       },
+      preMove:{ //记录上一次平移的大小
+        x:0,
+        y:0,
+        z:0,
+      },
       showCusRotate:false, //自定义旋转UI是否显示
-      showUI:false, //编辑UI是否显示
+      showUI:false, //构件编辑UI是否显示
       selectedId:null, //当前选中的构件ID
       viewer:null, //初始化viewer
       optionList:[
@@ -110,7 +115,7 @@ export default {
          id:'3',
          env: "Local",
          model_src:
-             "http://bim.ndwp.net:8876/forgescene/kongpuzhazhan/svf/3d.svf"
+             "http://bim.ndwp.net:8888/forgeviewer/liuzaojiangzhazhan/svf/3d.svf"
        }
        ]
     }
@@ -236,69 +241,69 @@ export default {
       this.viewer.impl.invalidate(true, true, true)
     },
 
+    //xyz方向旋转
+    move(){
+      let x = Number(document.getElementById('xMove').value),
+          y = Number(document.getElementById('yMove').value),
+          z = Number(document.getElementById('zMove').value);
+      this.moveBasic(x,y,z)
+    },
+
     //根据输入的xyz移动构件
-    move(x,y,z){
+    moveBasic(x,y,z){
       const fragIdList = this.getFragId();
-      x = Number(document.getElementById('xMove').value);
-      y = Number(document.getElementById('yMove').value);
-      z = Number(document.getElementById('zMove').value);
+      //计算平移
+      let X = x - this.preMove.x,
+          Y = y - this.preMove.y,
+          Z = z - this.preMove.z;
+
+      //更新上一次平移
+      this.preMove.x = x
+      this.preMove.y = y
+      this.preMove.z = z
 
       fragIdList.forEach((fragId)=> {
-        const center = new THREE.Vector3(x,y,z);
+        const center = new THREE.Vector3(X,Y,Z);
         const model = this.viewer.model;
         const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
         fragProxy.getAnimTransform();
         fragProxy.position = new THREE.Vector3(
-            center.x,
-            center.y,
-            center.z,
+            fragProxy.position.x - center.x,
+            fragProxy.position.y - center.y,
+            fragProxy.position.z - center.z,
         );
         console.log(fragProxy)
         fragProxy.updateAnimTransform();
+        this.viewer.impl.sceneUpdated(true);
       })
 
-      this.viewer.impl.sceneUpdated(true);
+
+    },
+
+    //角度转弧度
+    radius(d) {
+      return d * (Math.PI / 180)
     },
 
     //旋转构件
     rotate(n) {
-      //角度转弧度
-      function radius(d) {
-        return d * (Math.PI / 180)
-      }
-
       //获取输入的旋转角度
       let x = Number(document.getElementById('xRotate').value),
           y = Number(document.getElementById('yRotate').value),
           z = Number(document.getElementById('zRotate').value),
-          c = Number(document.getElementById('cusRotate').value),
-          // xCus0 = Number(document.getElementById('cusRotateX0')),
-          // yCus0 = Number(document.getElementById('cusRotateX0')),
-          // zCus0 = Number(document.getElementById('cusRotateX0')),
-
-          //自定义旋转轴方向
-           xCus = Number(document.getElementById('cusRotateX').value),
-           yCus = Number(document.getElementById('cusRotateY').value),
-           zCus = Number(document.getElementById('cusRotateZ').value);
-
-      //将自定义旋转轴归一化
-      let M = Math.sqrt(xCus^2 + yCus^2 + zCus^2)
-      xCus = xCus/M;
-      yCus = yCus/M;
-      zCus = zCus/M;
 
       //模型旋转的角度为输入的旋转角度和上一次旋转角度的差值
-      let X = radius(x - this.degree.x),
-          Y = radius(y - this.degree.y),
-          Z = radius(z - this.degree.z),
-          C = radius(c - this.degree.c);
+          X = this.radius(x - this.preRotate.x),
+          Y = this.radius(y - this.preRotate.y),
+          Z = this.radius(z - this.preRotate.z);
 
       //更新新的上一次旋转角度
-      this.degree.x = x
-      this.degree.y = y
-      this.degree.z = z
-      this.degree.c = c
+      this.preRotate.x = x
+      this.preRotate.y = y
+      this.preRotate.z = z
 
+
+      //获取碎片开始旋转
       const fragList = this.getFragId();
       const quaternion = new THREE.Quaternion();
 
@@ -312,10 +317,6 @@ export default {
       else if (n === 3){
         quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Z)
       }
-      else if (n === 4){
-        quaternion.setFromAxisAngle(new THREE.Vector3(xCus,yCus,zCus),C)
-      }
-
 
       fragList.forEach((fragId)=>{
         const fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
@@ -333,9 +334,90 @@ export default {
         //   euler.setFromQuaternion (fragProxy.quaternion , 0);
         // }
         fragProxy.updateAnimTransform();
+        console.log(fragProxy.quaternion)
       })
+      this.viewer.impl.sceneUpdated(true);
 
-      // this.move(-xCus0,-yCus0,-zCus0)
+    },
+
+    // cusRotate(){
+    //   let fragList = this.getFragId()
+    //   fragList.forEach((fragId)=>{
+    //     const fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
+    //     fragProxy.getAnimTransform();
+    //     fragProxy.position = new THREE.Vector3(0,0,0);
+    //     fragProxy.quaternion = new THREE.Quaternion(0,0,0,1)
+    //     fragProxy.updateAnimTransform();
+    //     console.log(fragProxy)
+    //   })
+    //   this.viewer.impl.sceneUpdated(true);
+    //   // setTimeout(()=>{
+    //   //   this.cusRotateBasic()
+    //   // },100)
+    //
+    // },
+
+    //自定义旋转
+    cusRotate(){
+     //获取旋转原点和角度
+      this.preRotate.c = 0
+      let x = Number(document.getElementById('cusRotateX0').value),
+          y = Number(document.getElementById('cusRotateY0').value),
+          z = Number(document.getElementById('cusRotateZ0').value),
+          c = Number(document.getElementById('cusRotate').value),
+
+      //自定义旋转轴方向
+          xCus = Number(document.getElementById('cusRotateX').value),
+          yCus = Number(document.getElementById('cusRotateY').value),
+          zCus = Number(document.getElementById('cusRotateZ').value);
+
+      //将自定义旋转轴归一化
+      const m = Math.sqrt(xCus*xCus + yCus*yCus + zCus*zCus),
+          xC = xCus/m,
+          yC = yCus/m,
+          zC = zCus/m;
+
+      //计算平移和角度
+      let X = x - this.preMove.x,
+          Y = y - this.preMove.y,
+          Z = z - this.preMove.z,
+          C = this.radius(c - this.preRotate.c);
+
+      //更新上一次平移和角度
+      this.preMove.x = x
+      this.preMove.y = y
+      this.preMove.z = z
+      this.preRotate.c = c
+
+      const fragIdList = this.getFragId()
+
+      fragIdList.forEach((fragId)=> {
+        const center = new THREE.Vector3(X,Y,Z);
+        const model = this.viewer.model;
+        const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
+        fragProxy.getAnimTransform();
+
+        fragProxy.position = new THREE.Vector3(0,0,0);
+        fragProxy.quaternion = new THREE.Quaternion(0,0,0,1)
+
+        //应用平移
+        const position = new THREE.Vector3(
+            fragProxy.position.x - center.x,
+            fragProxy.position.y - center.y,
+            fragProxy.position.z - center.z,
+        );
+        //设置旋转
+        const quaternion = new THREE.Quaternion();
+        quaternion.setFromAxisAngle(new THREE.Vector3(xC,yC,zC),C)
+        //应用旋转
+        position.applyQuaternion(quaternion)
+        //复原平移
+        position.add(center)
+        //讲配置好的矩阵应用在构件位置矩阵上
+        fragProxy.position = position
+        fragProxy.quaternion.multiplyQuaternions(quaternion,fragProxy.quaternion)
+        fragProxy.updateAnimTransform();
+      })
       this.viewer.impl.sceneUpdated(true);
     },
 
@@ -362,7 +444,13 @@ export default {
 
     //复原参数
     restore(){
-      this.degree.x = this.degree.y = this.degree.z = 0
+      this.preRotate.x = 0
+      this.preRotate.y = 0
+      this.preRotate.z = 0
+      this.preRotate.c = 0
+      this.preMove.x = 0
+      this.preMove.y = 0
+      this.preMove.z = 0
       document.getElementById('xMove').value = 0
       document.getElementById('yMove').value = 0
       document.getElementById('zMove').value = 0
