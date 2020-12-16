@@ -163,31 +163,19 @@ export default {
       })
     },
 
-    //打开编辑界面
+    //控制编辑界面的开关
     openUI(){
       if (this.viewer.getSelection().length === 0){
-        this.restore();
-        this.EndEdit();
+        this.restore()
+        this.showUI = false
+        this.viewer.unloadExtension('TemplateExtension')
+        this.viewer.clearSelection()
       }
-      else
-        this.StartEdit();
-    },
-
-    StartEdit(){
-      let n = document.getElementById('selectedId').value.length
-      this.showUI = n !== 0;
-        this.getFragId()
+      else {
+        this.showUI = true;
         this.viewer.loadExtension('TemplateExtension')
-
+      }
     },
-
-    EndEdit(){
-      this.showUI = false
-      this.viewer.unloadExtension('TemplateExtension')
-      this.viewer.clearSelection()
-      this.restore()
-    },
-
 
     //显示选中构件的ID
     getElementId(){
@@ -198,8 +186,6 @@ export default {
             this.selectedId = String(this.viewer.getSelection())
             input = this.viewer.getSelection()
             this.restore()
-            console.log(input)
-            // console.log(" >LJason< 日志：点击位置",this.viewer.clientToWorld(Event.offsetX,Event.offsetY,false).intersectPoint);
           }
       )
     },
@@ -241,19 +227,15 @@ export default {
       this.viewer.impl.invalidate(true, true, true)
     },
 
-    //xyz方向旋转
-    move(){
-      let x = Number(document.getElementById('xMove').value),
-          y = Number(document.getElementById('yMove').value),
-          z = Number(document.getElementById('zMove').value);
-      this.moveBasic(x,y,z)
-    },
-
     //根据输入的xyz移动构件
-    moveBasic(x,y,z){
+    move(){
       const fragIdList = this.getFragId();
       //计算平移
-      let X = x - this.preMove.x,
+      let x = Number(document.getElementById('xMove').value),
+          y = Number(document.getElementById('yMove').value),
+          z = Number(document.getElementById('zMove').value),
+
+          X = x - this.preMove.x,
           Y = y - this.preMove.y,
           Z = z - this.preMove.z;
 
@@ -262,6 +244,7 @@ export default {
       this.preMove.y = y
       this.preMove.z = z
 
+      //配置移动
       fragIdList.forEach((fragId)=> {
         const center = new THREE.Vector3(X,Y,Z);
         const model = this.viewer.model;
@@ -283,7 +266,7 @@ export default {
       return d * (Math.PI / 180)
     },
 
-    //xyz旋转构件
+    //xyz轴旋转构件
     rotate(n) {
       //获取输入的旋转角度
       let x = Number(document.getElementById('xRotate').value),
@@ -316,6 +299,7 @@ export default {
         quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Z)
       }
 
+      //配置旋转
       fragList.forEach((fragId)=>{
         const fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
         fragProxy.getAnimTransform();
@@ -327,15 +311,10 @@ export default {
         position.applyQuaternion(quaternion);
         fragProxy.position = position;
         fragProxy.quaternion.multiplyQuaternions(quaternion,fragProxy.quaternion);
-        // if (index === 0 ){
-        //   const euler = new THREE.Euler();
-        //   euler.setFromQuaternion (fragProxy.quaternion , 0);
-        // }
         fragProxy.updateAnimTransform();
         console.log(fragProxy.quaternion)
       })
       this.viewer.impl.sceneUpdated(true);
-
     },
 
     //自定义旋转
@@ -352,7 +331,7 @@ export default {
           zCus = Number(document.getElementById('cusRotateZ').value);
 
       //将自定义旋转轴归一化
-      const m = Math.sqrt(xCus*xCus + yCus*yCus + zCus*zCus),
+      let m = Math.sqrt(xCus*xCus + yCus*yCus + zCus*zCus),
           xC = xCus/m,
           yC = yCus/m,
           zC = zCus/m;
