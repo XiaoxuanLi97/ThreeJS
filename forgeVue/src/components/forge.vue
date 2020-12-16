@@ -62,7 +62,7 @@
 
             <tr v-show="showCusRotate">
               <td>旋转方向</td>
-              <td><label for="cusRotateX">x </label><input size="5" value=0 id="cusRotateX"></td>
+              <td><label for="cusRotateX">x </label><input size="5" value=1 id="cusRotateX"></td>
               <td><label for="cusRotateY">y </label><input size="5" value=0 id="cusRotateY"></td>
               <td><label for="cusRotateZ">z </label><input size="5" value=0 id="cusRotateZ"></td>
             </tr>
@@ -276,8 +276,6 @@ export default {
         fragProxy.updateAnimTransform();
         this.viewer.impl.sceneUpdated(true);
       })
-
-
     },
 
     //角度转弧度
@@ -285,7 +283,7 @@ export default {
       return d * (Math.PI / 180)
     },
 
-    //旋转构件
+    //xyz旋转构件
     rotate(n) {
       //获取输入的旋转角度
       let x = Number(document.getElementById('xRotate').value),
@@ -340,27 +338,9 @@ export default {
 
     },
 
-    // cusRotate(){
-    //   let fragList = this.getFragId()
-    //   fragList.forEach((fragId)=>{
-    //     const fragProxy = this.viewer.impl.getFragmentProxy(this.viewer.model, fragId);
-    //     fragProxy.getAnimTransform();
-    //     fragProxy.position = new THREE.Vector3(0,0,0);
-    //     fragProxy.quaternion = new THREE.Quaternion(0,0,0,1)
-    //     fragProxy.updateAnimTransform();
-    //     console.log(fragProxy)
-    //   })
-    //   this.viewer.impl.sceneUpdated(true);
-    //   // setTimeout(()=>{
-    //   //   this.cusRotateBasic()
-    //   // },100)
-    //
-    // },
-
     //自定义旋转
     cusRotate(){
      //获取旋转原点和角度
-      this.preRotate.c = 0
       let x = Number(document.getElementById('cusRotateX0').value),
           y = Number(document.getElementById('cusRotateY0').value),
           z = Number(document.getElementById('cusRotateZ0').value),
@@ -377,26 +357,18 @@ export default {
           yC = yCus/m,
           zC = zCus/m;
 
-      //计算平移和角度
-      let X = x - this.preMove.x,
-          Y = y - this.preMove.y,
-          Z = z - this.preMove.z,
-          C = this.radius(c - this.preRotate.c);
-
-      //更新上一次平移和角度
-      this.preMove.x = x
-      this.preMove.y = y
-      this.preMove.z = z
-      this.preRotate.c = c
+      //计算角度
+      let C = this.radius(c);
 
       const fragIdList = this.getFragId()
 
       fragIdList.forEach((fragId)=> {
-        const center = new THREE.Vector3(X,Y,Z);
+        const center = new THREE.Vector3(x,y,z);
         const model = this.viewer.model;
         const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
         fragProxy.getAnimTransform();
 
+        //每次旋转前初始化位置与旋转四元数
         fragProxy.position = new THREE.Vector3(0,0,0);
         fragProxy.quaternion = new THREE.Quaternion(0,0,0,1)
 
@@ -406,7 +378,8 @@ export default {
             fragProxy.position.y - center.y,
             fragProxy.position.z - center.z,
         );
-        //设置旋转
+
+        //设置旋转四元数
         const quaternion = new THREE.Quaternion();
         quaternion.setFromAxisAngle(new THREE.Vector3(xC,yC,zC),C)
         //应用旋转
@@ -416,7 +389,9 @@ export default {
         //讲配置好的矩阵应用在构件位置矩阵上
         fragProxy.position = position
         fragProxy.quaternion.multiplyQuaternions(quaternion,fragProxy.quaternion)
-        fragProxy.updateAnimTransform();
+
+        fragProxy.updateAnimTransform()
+        // console.log(fragProxy.position,fragProxy.quaternion)
       })
       this.viewer.impl.sceneUpdated(true);
     },
