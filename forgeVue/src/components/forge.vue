@@ -54,17 +54,19 @@
               <td colspan="4"><button @click="expandCusRotate">自定义旋转</button></td>
             </tr>
             <tr v-show="showCusRotate">
-              <td>旋转原点</td>
-              <td><label for="cusRotateX0">x </label><input size="5" value=0 id="cusRotateX0" @change=""></td>
-              <td><label for="cusRotateY0">y </label><input size="5" value=-7.12 id="cusRotateY0" @change=""></td>
-              <td><label for="cusRotateZ0">z </label><input size="5" value=-7.65 id="cusRotateZ0" @change=""></td>
+              <td><button @click="getXYZ(1)">端点1</button></td>
+              <td><label for="cusRotateX1">x </label><input size="5" value=0 id="cusRotateX1"></td>
+              <td><label for="cusRotateY1">y </label><input size="5" value=0 id="cusRotateY1"></td>
+              <td><label for="cusRotateZ1">z </label><input size="5" value=0 id="cusRotateZ1"></td>
             </tr>
 
             <tr v-show="showCusRotate">
-              <td>旋转方向</td>
-              <td><label for="cusRotateX">x </label><input size="5" value=1 id="cusRotateX"></td>
-              <td><label for="cusRotateY">y </label><input size="5" value=0 id="cusRotateY"></td>
-              <td><label for="cusRotateZ">z </label><input size="5" value=0 id="cusRotateZ"></td>
+              <td>
+                <button @click="getXYZ(2)">端点2</button>
+              </td>
+              <td><label for="cusRotateX2">x </label><input size="5" value=0 id="cusRotateX2"></td>
+              <td><label for="cusRotateY2">y </label><input size="5" value=0 id="cusRotateY2"></td>
+              <td><label for="cusRotateZ2">z </label><input size="5" value=0 id="cusRotateZ2"></td>
             </tr>
 
             <tr v-show="showCusRotate">
@@ -79,11 +81,15 @@
 </template>
 
 <script>
-import transform from './extension/edit'
 export default {
   name: "forge",
   data(){
     return{
+      hitPoint:{
+        x:0,
+        y:0,
+        z:0
+      },
       preRotate:{ //记录上一次的旋转角度
         x:0,
         y:0,
@@ -121,7 +127,6 @@ export default {
     }
   },
   methods:{
-
     //初始化查看器
     init(options){
       Autodesk.Viewing.Initializer(options,()=>{
@@ -174,6 +179,7 @@ export default {
       else {
         this.showUI = true;
         this.viewer.loadExtension('TemplateExtension')
+
       }
     },
 
@@ -183,6 +189,7 @@ export default {
       this.viewer.addEventListener(
           Autodesk.Viewing.SELECTION_CHANGED_EVENT,
           ()=>{
+            //显示ID
             this.selectedId = String(this.viewer.getSelection())
             input = this.viewer.getSelection()
             this.restore()
@@ -194,7 +201,6 @@ export default {
     findElement(){
       let input = document.getElementById('selectedId').value;
       this.viewer.select(Number(input))
-      this.openUI()
     },
 
     //找到选择构件的碎片ID
@@ -319,30 +325,38 @@ export default {
 
     //自定义旋转
     cusRotate(){
+      document.removeEventListener('click',(e)=>{
+        let point = this.getHitPoint(e);
+        this.hitPoint.x = point.x
+        this.hitPoint.y = point.y
+        this.hitPoint.z = point.z
+      })
      //获取旋转原点和角度
-      let x = Number(document.getElementById('cusRotateX0').value),
-          y = Number(document.getElementById('cusRotateY0').value),
-          z = Number(document.getElementById('cusRotateZ0').value),
-          c = Number(document.getElementById('cusRotate').value),
+      const x1 = Number(document.getElementById('cusRotateX1').value),
+            y1 = Number(document.getElementById('cusRotateY1').value),
+            z1 = Number(document.getElementById('cusRotateZ1').value),
+            x2 = Number(document.getElementById('cusRotateX2').value),
+            y2 = Number(document.getElementById('cusRotateY2').value),
+            z2 = Number(document.getElementById('cusRotateZ2').value),
+            c = Number(document.getElementById('cusRotate').value);
 
-      //自定义旋转轴方向
-          xCus = Number(document.getElementById('cusRotateX').value),
-          yCus = Number(document.getElementById('cusRotateY').value),
-          zCus = Number(document.getElementById('cusRotateZ').value);
+      //计算自定义旋转轴方向向量
+      const x = x2 - x1,
+            y = y2 - y1,
+            z = z2 - z1;
 
       //将自定义旋转轴归一化
-      let m = Math.sqrt(xCus*xCus + yCus*yCus + zCus*zCus),
-          xC = xCus/m,
-          yC = yCus/m,
-          zC = zCus/m;
+      let m = Math.sqrt(x*x + y*y + z*z),
+          xN = x/m,
+          yN = y/m,
+          zN = z/m;
 
       //计算角度
       let C = this.radius(c);
 
       const fragIdList = this.getFragId()
-
       fragIdList.forEach((fragId)=> {
-        const center = new THREE.Vector3(x,y,z);
+        const center = new THREE.Vector3(x1,y1,z1);
         const model = this.viewer.model;
         const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
         fragProxy.getAnimTransform();
@@ -360,12 +374,12 @@ export default {
 
         //设置旋转四元数
         const quaternion = new THREE.Quaternion();
-        quaternion.setFromAxisAngle(new THREE.Vector3(xC,yC,zC),C)
+        quaternion.setFromAxisAngle(new THREE.Vector3(xN,yN,zN),C)
         //应用旋转
         position.applyQuaternion(quaternion)
         //复原平移
         position.add(center)
-        //讲配置好的矩阵应用在构件位置矩阵上
+        //将配置好的矩阵应用在构件位置矩阵上
         fragProxy.position = position
         fragProxy.quaternion.multiplyQuaternions(quaternion,fragProxy.quaternion)
 
@@ -414,21 +428,57 @@ export default {
       document.getElementById('xMagnify').value = 1
       document.getElementById('yMagnify').value = 1
       document.getElementById('zMagnify').value = 1
-      document.getElementById('cusRotateX').value = 0
-      document.getElementById('cusRotateY').value = 0
-      document.getElementById('cusRotateZ').value = 0
+      // document.getElementById('cusRotateX').value = 0
+      // document.getElementById('cusRotateY').value = 0
+      // document.getElementById('cusRotateZ').value = 0
     },
 
     //展开自定义旋转界面
     expandCusRotate(){
       this.showCusRotate = !this.showCusRotate
+      setTimeout(()=>{
+          document.addEventListener('click',(e)=>{
+            let point = this.getHitPoint(e);
+            this.hitPoint.x = point.x
+            this.hitPoint.y = point.y
+            this.hitPoint.z = point.z
+          })
+      },100)
     },
 
+    getHitPoint(e){
+      let screenPoint = {
+        x:e.offsetX,
+        y:e.offsetY
+      }
+
+      let viewport = this.viewer.navigation.getScreenViewport();
+
+      let n = {
+          x: (screenPoint.x - viewport.left) / viewport.width,
+          y: (screenPoint.y - viewport.top) / viewport.height
+        };
+
+      return this.viewer.utilities.getHitPoint(n.x, n.y);
+    },
+
+    getXYZ(n){
+      if (n === 1){
+        document.getElementById('cusRotateX1').value = this.hitPoint.x
+        document.getElementById('cusRotateY1').value = this.hitPoint.y
+        document.getElementById('cusRotateZ1').value = this.hitPoint.z
+      }
+      else if (n === 2){
+        document.getElementById('cusRotateX2').value = this.hitPoint.x
+        document.getElementById('cusRotateY2').value = this.hitPoint.y
+        document.getElementById('cusRotateZ2').value = this.hitPoint.z
+      }
+    },
   },
   mounted(){
     this.init(this.optionList[0])
 
-    document.addEventListener('click',()=>{
+    document.addEventListener('click',(e)=>{
       this.openUI()
     })
 
