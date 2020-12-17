@@ -24,18 +24,15 @@ export default {
       viewer:null, //初始化viewer
       optionList:[
        {
-         id:'1',
          env:'Local',
          model_src: "http://bim.ndwp.net:8876/forgescene/liuzaojiangzhazhan_20190905/3d.svf"
        },
        {
-         id:'2',
          env: "Local",
          model_src:
              "http://bim.ndwp.net:8876/forgescene/wuzaojiangzha_1/3d.svf"
        },
        {
-         id:'3',
          env: "Local",
          model_src:
              "http://bim.ndwp.net:8888/forgeviewer/liuzaojiangzhazhan/svf/3d.svf"
@@ -101,17 +98,6 @@ body{
   font-family:Verdana,serif;
 }
 
-.select {
-  position: center;
-  width: 100px;
-  color: #f4f4f4;
-  background-color: rgba(34, 34, 34, 0.94);
-  box-shadow: 1px 3px 10px 0 rgba(0, 0, 0, 0.3);
-  outline: none;
-  border-radius: 3px;
-
-}
-
 .customUI{
   position: absolute;
   z-index: 2;
@@ -119,6 +105,5 @@ body{
   top: 20px;
   line-height: 24px;
 }
-
 
 </style>
