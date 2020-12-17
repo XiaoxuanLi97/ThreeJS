@@ -42,7 +42,7 @@ export default {
   mounted() {
     setTimeout(()=>{
       this.getElementId()
-    },200)
+    },20)
 
   }
 }

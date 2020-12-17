@@ -1,13 +1,6 @@
 <template>
-
   <div id="forgeViewer">
     <div class="customUI">
-      <div class="select">
-        <label for="sceneSelect">选择场景 </label>
-        <select id="sceneSelect" @change="changeScene">
-        <option v-for="item in optionList" :value="item.id">{{item.id}}</option>
-        </select>
-      </div>
       <showID :viewer="viewer"/>
       <positionEdit :viewer="viewer"/>
       <materialEdit :viewer="viewer"/>
