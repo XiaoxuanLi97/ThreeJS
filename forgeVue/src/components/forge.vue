@@ -12,6 +12,7 @@
 import showID from "./extension/showID";
 import positionEdit from "./extension/positionEdit";
 import materialEdit from "./extension/materialEdit";
+
 export default {
   name: "forge",
   components:{
@@ -66,16 +67,6 @@ export default {
       Autodesk.Viewing.Initializer(options, () => {
         this.viewer.initialize(); //创建DOM和canvas元素，设置WebGL
         this.viewer.loadModel(options.model_src); //加载模型到查看器中
-      })
-    },
-
-    //切换场景
-    changeScene(){
-      let e = document.getElementById('sceneSelect').value
-      this.optionList.forEach(value => {
-        if (value.id === e){
-          this.loadScene(value)
-        }
       })
     },
   },
