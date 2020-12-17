@@ -85,9 +85,6 @@ export default {
       this.optionList.forEach(value => {
         if (value.id === e){
           this.loadScene(value)
-          setTimeout(()=>{
-            this.getElementId()
-          },200)
         }
       })
     },

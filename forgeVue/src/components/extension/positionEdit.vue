@@ -1,70 +1,62 @@
 <template>
   <div>
-  <button @click="openUI">编辑位置</button>
-  <div v-show="showUI">
-    <table>
-      <thead>
-      <tr>
-        <th/>
-        <th>平移(米)</th>
-        <th>旋转(度)</th>
-        <th>缩放(倍)</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr>
-        <td>x</td>
-        <td><label><input id="xMove" size="5" value=0 @change="move(1)"></label></td>
-        <td><label><input id="xRotate" size="5" value=0 @change="rotate(1)"></label></td>
-        <td><label><input id="xMagnify" size="5" value=1 @change="magnify"></label></td>
-      </tr>
-      <tr>
-        <td>y</td>
-        <td><label><input id="yMove" size="5" value=0 @change="move(1)"></label></td>
-        <td><label><input id="yRotate" size="5" value=0 @change="rotate(2)"></label></td>
-        <td><label><input id="yMagnify" size="5" value=1 @change="magnify"></label></td>
-      </tr>
-      <tr>
-        <td>z</td>
-        <td><label><input id="zMove" size="5" value=0 @change="move(1)"></label></td>
-        <td><label><input id="zRotate" size="5" value=0 @change="rotate(3)"></label></td>
-        <td><label><input id="zMagnify" size="5" value=1 @change="magnify"></label></td>
-      </tr>
+    <button @click="openUI">编辑位置</button>
+    <div v-show="showUI">
+      <table>
+        <thead>
+        <tr>
+          <th/>
+          <th>平移(米)</th>
+          <th>旋转(度)</th>
+          <th>缩放(倍)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+          <td>x</td>
+          <td><label><input id="xMove" size="5" value=0 @change="move(1)"></label></td>
+          <td><label><input id="xRotate" size="5" value=0 @change="rotate(1)"></label></td>
+          <td><label><input id="xMagnify" size="5" value=1 @change="magnify"></label></td>
+        </tr>
+        <tr>
+          <td>y</td>
+          <td><label><input id="yMove" size="5" value=0 @change="move(1)"></label></td>
+          <td><label><input id="yRotate" size="5" value=0 @change="rotate(2)"></label></td>
+          <td><label><input id="yMagnify" size="5" value=1 @change="magnify"></label></td>
+        </tr>
+        <tr>
+          <td>z</td>
+          <td><label><input id="zMove" size="5" value=0 @change="move(1)"></label></td>
+          <td><label><input id="zRotate" size="5" value=0 @change="rotate(3)"></label></td>
+          <td><label><input id="zMagnify" size="5" value=1 @change="magnify"></label></td>
+        </tr>
 
-      <tr>
-        <td colspan="2">透明度</td>
-        <td colspan="2">
-          <label for="myRange"></label>
-          <input id="myRange" type="range" min="0" max="1" step="0.01" @change="setTransparency" value=1 />
-        </td>
-      </tr>
+        <tr>
+          <td colspan="4"><button @click="showRotateUI">自定义旋转</button></td>
+        </tr>
+        <tr v-show="showCusRotate">
+          <td><button @click="getXYZ(1)">端点1</button></td>
+          <td><label for="cusRotateX1">x </label><input size="5" value=0 id="cusRotateX1"></td>
+          <td><label for="cusRotateY1">y </label><input size="5" value=0 id="cusRotateY1"></td>
+          <td><label for="cusRotateZ1">z </label><input size="5" value=0 id="cusRotateZ1"></td>
+        </tr>
 
-      <tr>
-        <td colspan="4"><button @click="showCusRotate = !showCusRotate">自定义旋转</button></td>
-      </tr>
-      <tr v-show="showCusRotate">
-        <td><button @click="getXYZ(1)">端点1</button></td>
-        <td><label for="cusRotateX1">x </label><input size="5" value=0 id="cusRotateX1"></td>
-        <td><label for="cusRotateY1">y </label><input size="5" value=0 id="cusRotateY1"></td>
-        <td><label for="cusRotateZ1">z </label><input size="5" value=0 id="cusRotateZ1"></td>
-      </tr>
+        <tr v-show="showCusRotate">
+          <td>
+            <button @click="getXYZ(2)">端点2</button>
+          </td>
+          <td><label for="cusRotateX2">x </label><input maxlength="5" size="5" value=0 id="cusRotateX2"></td>
+          <td><label for="cusRotateY2">y </label><input maxlength="5" size="5" value=0 id="cusRotateY2"></td>
+          <td><label for="cusRotateZ2">z </label><input maxlength="5" size="5" value=0 id="cusRotateZ2"></td>
+        </tr>
 
-      <tr v-show="showCusRotate">
-        <td>
-          <button @click="getXYZ(2)">端点2</button>
-        </td>
-        <td><label for="cusRotateX2">x </label><input maxlength="5" size="5" value=0 id="cusRotateX2"></td>
-        <td><label for="cusRotateY2">y </label><input maxlength="5" size="5" value=0 id="cusRotateY2"></td>
-        <td><label for="cusRotateZ2">z </label><input maxlength="5" size="5" value=0 id="cusRotateZ2"></td>
-      </tr>
-
-      <tr v-show="showCusRotate">
-        <td colspan="2">旋转角度</td>
-        <td colspan="2"><label for="cusRotate"></label><input size="5" value=0 id="cusRotate" @change="cusRotate"></td>
-      </tr>
-      </tbody>
-    </table>
-  </div>
+        <tr v-show="showCusRotate">
+          <td colspan="2">旋转角度</td>
+          <td colspan="2"><label for="cusRotate"></label><input size="5" value=0 id="cusRotate" @change="cusRotate"></td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -121,24 +113,6 @@ export default {
         fragIds.push(fragId)
       });
       return fragIds
-    },
-
-    //设置透明度
-    setTransparency() {
-      let fragList = this.viewer.model.getFragmentList(),
-          transparency = document.getElementById('myRange').value,
-          fragIds = this.getFragId();
-      fragIds.forEach((fragId) => {
-        let material = fragList.getMaterial(fragId);
-        if (material) {
-          // this.currentOpacity = material.opacity
-          material.opacity = transparency; //调节一种材料的透明度，所有相同材料构件的透明度都会调整
-          material.transparent = true;
-          material.needsUpdate = true;
-        }
-        console.log(material)
-      })
-      this.viewer.impl.invalidate(true, true, true)
     },
 
     //根据输入的xyz移动构件
@@ -370,6 +344,13 @@ export default {
         document.getElementById('cusRotateX2').value = this.hitPoint.x
         document.getElementById('cusRotateY2').value = this.hitPoint.y
         document.getElementById('cusRotateZ2').value = this.hitPoint.z
+      }
+    },
+
+    showRotateUI(){
+      this.showCusRotate = !this.showCusRotate
+      if(this.showCusRotate) {
+        alert('获取坐标方式：<1>点击目标位置获取坐标 <2>按端点1或2上传')
       }
     }
   },
