@@ -352,7 +352,7 @@ export default {
       if(this.showCusRotate) {
         alert('获取坐标方式：<1>点击目标位置获取坐标 <2>按端点1或2上传')
       }
-    }
+    },
   },
   mounted() {
     document.addEventListener('click',(e)=>{
