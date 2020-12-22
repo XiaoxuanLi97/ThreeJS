@@ -13,19 +13,19 @@
         </thead>
         <tbody>
         <tr>
-          <td>x</td>
+          <td class="x">x</td>
           <td><label><input id="xMove" size="5" value=0 @change="move(1)"></label></td>
           <td><label><input id="xRotate" size="5" value=0 @change="rotate(1)"></label></td>
           <td><label><input id="xMagnify" size="5" value=1 @change="magnify"></label></td>
         </tr>
         <tr>
-          <td>y</td>
+          <td class="y">y</td>
           <td><label><input id="yMove" size="5" value=0 @change="move(1)"></label></td>
           <td><label><input id="yRotate" size="5" value=0 @change="rotate(2)"></label></td>
           <td><label><input id="yMagnify" size="5" value=1 @change="magnify"></label></td>
         </tr>
         <tr>
-          <td>z</td>
+          <td class="z">z</td>
           <td><label><input id="zMove" size="5" value=0 @change="move(1)"></label></td>
           <td><label><input id="zRotate" size="5" value=0 @change="rotate(3)"></label></td>
           <td><label><input id="zMagnify" size="5" value=1 @change="magnify"></label></td>
@@ -68,6 +68,11 @@ export default {
   },
   data(){
     return{
+      position:{
+        x:0,
+        y:0,
+        z:0
+      },
       hitPoint:{ //存储点击坐标
         x:0,
         y:0,
@@ -84,6 +89,8 @@ export default {
         y:0,
         z:0,
       },
+      transformMesh:null,
+      transformControlTx:null,
       showCusRotate:false, //自定义旋转UI是否显示
       showUI:false, //构件编辑UI是否显示
     }
@@ -95,9 +102,11 @@ export default {
         alert('请选择一个有效的构件')
         this.restore()
         this.showUI = false
+        this.transformControlTx.visible = false
         // this.viewer.unloadExtension('TemplateExtension')
       }
       else {
+        this.activeTransformTx()
         this.showUI = !this.showUI
         // this.viewer.loadExtension('TemplateExtension')
       }
@@ -139,9 +148,9 @@ export default {
         const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
         fragProxy.getAnimTransform();
         fragProxy.position = new THREE.Vector3(
-            fragProxy.position.x - center.x,
-            fragProxy.position.y - center.y,
-            fragProxy.position.z - center.z,
+            fragProxy.position.x + center.x,
+            fragProxy.position.y + center.y,
+            fragProxy.position.z + center.z,
         );
         console.log(fragProxy)
         fragProxy.updateAnimTransform();
@@ -322,10 +331,10 @@ export default {
 
           point = this.viewer.utilities.getHitPoint(n.x, n.y);
 
-      if (point === null){
-        // console.log('鼠标点击不在模型构件上')
+      if (point === null) {
+
       }
-      else{
+      else {
         this.hitPoint.x = point.x.toFixed(2)
         this.hitPoint.y = point.y.toFixed(2)
         this.hitPoint.z = point.z.toFixed(2)
@@ -352,6 +361,52 @@ export default {
       if(this.showCusRotate) {
         alert('获取坐标方式：<1>点击目标位置获取坐标 <2>按端点1或2上传')
       }
+    },
+    createTransformMesh(){
+      const material = new THREE.MeshPhongMaterial(
+          {color:0xff0000})
+
+      this.viewer.impl.matman().addMaterial(
+          'transformToolMaterial', material, true
+      )
+
+      let sphere = new THREE.Mesh(
+          new THREE.SphereGeometry(0.0001,5),
+          material
+      )
+
+      sphere.position.set(0,0,0)
+
+      return sphere
+    },
+
+    activeTransformTx(){
+      let bbox = this.viewer.model.getBoundingBox()
+
+      this.viewer.impl.createOverlayScene(
+          'TransformToolOverlay')
+
+      this.transformControlTx = new THREE.TransformControls(
+          this.viewer.impl.camera,
+          this.viewer.impl.canvas,
+          'translate')
+
+      this.transformControlTx.setSize(
+          bbox.getBoundingSphere().radius * 5)
+
+      this.transformControlTx.visible = false
+
+      this.viewer.impl.addOverlay(
+          'TransformToolOverlay',
+          this.transformControlTx)
+
+      this.transformMesh = this.createTransformMesh()
+
+      this.transformControlTx.attach(
+          this.transformMesh)
+
+      this.transformControlTx.setPosition(this.hitPoint)
+      this.transformControlTx.visible = !this.showUI
     },
   },
   mounted() {
@@ -381,5 +436,18 @@ th{
   background-color: cornflowerblue;
   color: black;
   font-weight:600;
+}
+
+
+td.x{
+  background-color: orangered;
+}
+
+td.y{
+  background-color:lawngreen;
+}
+
+td.z{
+  background-color: royalblue;
 }
 </style>

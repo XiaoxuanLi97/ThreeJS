@@ -136,7 +136,7 @@ export default {
     //编辑材料
     materialEdit(){
       let fragList = this.viewer.model.getFragmentList(),
-          transparency = this.property.opacity,
+          transparency = Number(this.property.opacity),
           shininess = Number(this.property.shininess),
           colorR = this.property.color.r,
           colorG = this.property.color.g,
@@ -179,7 +179,6 @@ export default {
           this.property.shininess = material.shininess / 100
           this.property.wireframe = material.wireframe
         }
-        console.log(material)
       })
     },
 
