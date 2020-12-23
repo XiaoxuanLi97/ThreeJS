@@ -236,6 +236,7 @@ export default {
       //计算角度
       let C = this.radius(c);
 
+      //获取构件开始旋转
       const fragIdList = this.getFragId()
       fragIdList.forEach((fragId)=> {
         const center = new THREE.Vector3(x1,y1,z1);
@@ -273,7 +274,6 @@ export default {
 
     //放大构件
     magnify(){
-      const center = new THREE.Vector3(this.hitPoint.x, this.hitPoint.y, this.hitPoint.z)
       const fragIdList = this.getFragId();
       let x = Number(document.getElementById('xMagnify').value),
           y = Number(document.getElementById('yMagnify').value),
@@ -283,21 +283,12 @@ export default {
         const model = this.viewer.model;
         const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
         fragProxy.getAnimTransform();
-
-        const position = new THREE.Vector3(
-            fragProxy.position.x - center.x,
-            fragProxy.position.y - center.y,
-            fragProxy.position.z - center.z,
-        );
-
         fragProxy.scale.x = x;
         fragProxy.scale.y = y;
         fragProxy.scale.z = z;
         fragProxy.updateAnimTransform();
       })
-
       this.viewer.impl.sceneUpdated(true);
-
     },
 
     //复原参数
