@@ -413,7 +413,7 @@ export default {
     deactivateTransform(){
       //取消独立构件
       this.viewer.isolate(0)
-
+      this.viewer.select([])
       //清空坐标轴
       this.viewer.impl.removeOverlay(
           'TransformToolOverlay',
