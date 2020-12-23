@@ -413,7 +413,10 @@ export default {
     deactivateTransform(){
       //取消独立构件
       this.viewer.isolate(0)
+      //清空选择
       this.viewer.select([])
+      //关闭自定义旋转
+      this.showCusRotate = false
       //清空坐标轴
       this.viewer.impl.removeOverlay(
           'TransformToolOverlay',
