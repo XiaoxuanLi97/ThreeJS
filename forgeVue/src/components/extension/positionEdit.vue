@@ -68,11 +68,6 @@ export default {
   },
   data(){
     return{
-      position:{
-        x:0,
-        y:0,
-        z:0
-      },
       hitPoint:{ //存储点击坐标
         x:0,
         y:0,
@@ -89,6 +84,7 @@ export default {
         y:0,
         z:0,
       },
+      selected:null,
       transformMesh:null,
       transformControlTx:null,
       showCusRotate:false, //自定义旋转UI是否显示
@@ -100,15 +96,16 @@ export default {
     openUI(){
       if (this.viewer.getSelection().length === 0){
         alert('请选择一个有效的构件')
-        this.restore()
-        this.showUI = false
-        this.transformControlTx.visible = false
-        // this.viewer.unloadExtension('TemplateExtension')
       }
-      else {
-        this.activeTransformTx()
-        this.showUI = !this.showUI
-        // this.viewer.loadExtension('TemplateExtension')
+      else if(this.showUI === false) {
+        this.showUI = true
+        this.activeTransform()
+
+      }
+      else if(this.showUI === true){
+        this.showUI = false
+        this.deactivateTransform()
+        this.restore()
       }
     },
 
@@ -276,6 +273,7 @@ export default {
 
     //放大构件
     magnify(){
+      const center = new THREE.Vector3(this.hitPoint.x, this.hitPoint.y, this.hitPoint.z)
       const fragIdList = this.getFragId();
       let x = Number(document.getElementById('xMagnify').value),
           y = Number(document.getElementById('yMagnify').value),
@@ -285,6 +283,13 @@ export default {
         const model = this.viewer.model;
         const fragProxy = this.viewer.impl.getFragmentProxy(model, fragId)
         fragProxy.getAnimTransform();
+
+        const position = new THREE.Vector3(
+            fragProxy.position.x - center.x,
+            fragProxy.position.y - center.y,
+            fragProxy.position.z - center.z,
+        );
+
         fragProxy.scale.x = x;
         fragProxy.scale.y = y;
         fragProxy.scale.z = z;
@@ -362,6 +367,8 @@ export default {
         alert('获取坐标方式：<1>点击目标位置获取坐标 <2>按端点1或2上传')
       }
     },
+
+    //创建坐标轴依附
     createTransformMesh(){
       const material = new THREE.MeshPhongMaterial(
           {color:0xff0000})
@@ -380,12 +387,18 @@ export default {
       return sphere
     },
 
-    activeTransformTx(){
+    //开始编辑
+    activeTransform(){
+      //独立编辑构件
+      let ids = this.viewer.getSelection()
+      this.viewer.isolate(ids)
+      document.getElementById('selectedId').value = ids
+
+      //绘制坐标轴
       let bbox = this.viewer.model.getBoundingBox()
 
       this.viewer.impl.createOverlayScene(
           'TransformToolOverlay')
-
       this.transformControlTx = new THREE.TransformControls(
           this.viewer.impl.camera,
           this.viewer.impl.canvas,
@@ -394,19 +407,30 @@ export default {
       this.transformControlTx.setSize(
           bbox.getBoundingSphere().radius * 5)
 
-      this.transformControlTx.visible = false
+      this.transformControlTx.visible = true
 
       this.viewer.impl.addOverlay(
           'TransformToolOverlay',
           this.transformControlTx)
 
       this.transformMesh = this.createTransformMesh()
-
-      this.transformControlTx.attach(
-          this.transformMesh)
-
+      this.transformControlTx.attach(this.transformMesh)
       this.transformControlTx.setPosition(this.hitPoint)
-      this.transformControlTx.visible = !this.showUI
+    },
+
+    //结束编辑
+    deactivateTransform(){
+      //取消独立构件
+      this.viewer.isolate(0)
+
+      //清空坐标轴
+      this.viewer.impl.removeOverlay(
+          'TransformToolOverlay',
+          this.transformControlTx);
+      this.viewer.impl.removeOverlayScene(
+          'TransformToolOverlay');
+      this.transformControlTx = null;
+
     },
   },
   mounted() {

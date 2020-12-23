@@ -108,7 +108,6 @@ export default {
     }
   },
   methods:{
-
     //打开关闭材质编辑界面
     openUI(){
       if (this.viewer.getSelection().length === 0){
@@ -161,7 +160,6 @@ export default {
       })
       this.viewer.impl.invalidate(true, true, true)
     },
-
 
     //获取材料信息显示在编辑UI上
     getMaterial(){
