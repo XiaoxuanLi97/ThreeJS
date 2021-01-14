@@ -4,6 +4,7 @@
       <showID :viewer="viewer"/>
       <positionEdit :viewer="viewer"/>
       <materialEdit :viewer="viewer"/>
+      <moveCam :viewer="viewer" />
     </div>
   </div>
 </template>
@@ -12,13 +13,15 @@
 import showID from "./extension/showID";
 import positionEdit from "./extension/positionEdit";
 import materialEdit from "./extension/materialEdit";
+import moveCam from "./extension/moveCam";
 
 export default {
   name: "forge",
   components:{
     showID,
     positionEdit,
-    materialEdit
+    materialEdit,
+    moveCam
   },
   data(){
     return{
@@ -28,16 +31,14 @@ export default {
          env:'Local',
          model_src: "http://bim.ndwp.net:8876/forgescene/liuzaojiangzhazhan_20190905/3d.svf"
        },
-       {
-         env: "Local",
-         model_src:
-             "http://bim.ndwp.net:8876/forgescene/wuzaojiangzha_1/3d.svf"
-       },
-       {
-         env: "Local",
-         model_src:
-             "http://bim.ndwp.net:8888/forgeviewer/liuzaojiangzhazhan/svf/3d.svf"
-       }
+        {
+          env: 'Local',
+          model_src: 'http://bim.ndwp.net:8876/forgescene/tujiayanbengzhan/svf/3d.svf'
+        },
+        {
+          env: 'Local',
+          model_src: 'http://bim.ndwp.net:8876/forgescene/miaohouhejiezhizha/svf/3d.svf'
+        }
        ]
     }
   },
@@ -71,7 +72,7 @@ export default {
     },
   },
   mounted(){
-    this.init(this.optionList[0])
+    this.init(this.optionList[1])
   }
 }
 </script>
@@ -82,9 +83,7 @@ body{
 }
 #forgeViewer{
   width: 100%;
-  height: 100%;
-  margin: 0;
-  backgroud-color:#F0F8FF;
+  height: 80vh;
   font-weight: bold;
   font-family:Verdana,serif;
 }

@@ -1,6 +1,7 @@
 <template>
   <div>
     <button @click="openUI">编辑位置</button>
+    <button @click="multiChoose">多选</button>
     <div v-show="showUI">
       <table>
         <thead>
@@ -93,6 +94,9 @@ export default {
   },
   methods:{
     //控制编辑界面的开关
+    multiChoose() {
+
+    },
     openUI(){
       if (this.viewer.getSelection().length === 0){
         alert('请选择一个有效的构件')
